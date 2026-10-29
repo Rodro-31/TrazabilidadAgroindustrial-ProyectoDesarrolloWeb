@@ -18,10 +18,11 @@ jobs:
           cache: npm
           cache-dependency-path: api/package-lock.json
 
-      - name: API - instalar, probar y compilar
+      - name: API - instalar, generar Prisma, probar y compilar
         working-directory: api
         run: |
           npm ci
+          npx prisma generate
           npm test
           npm run build
 
