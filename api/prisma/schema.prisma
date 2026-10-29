@@ -47,6 +47,7 @@ model Usuario {
   recepciones   Recepcion[]     @relation("RegistradoPor")
   tokensCreados Token[]         @relation("TokenCreador")
   auditorias    Auditoria[]     @relation("AuditoriaUsuario")
+  refreshTokens RefreshToken[]
 
   @@map("usuario")
 }
@@ -173,4 +174,19 @@ model Auditoria {
   @@index([entidad, entidadId])
   @@index([creadoEn])
   @@map("auditoria")
+}
+
+// Refresh tokens: se guarda solo el hash SHA-256. Cada uso revoca el anterior (rotación).
+model RefreshToken {
+  id         String    @id @default(uuid())
+  usuarioId  String    @map("usuario_id")
+  tokenHash  String    @unique @map("token_hash")
+  expiraEn   DateTime  @map("expira_en")
+  revocadoEn DateTime? @map("revocado_en")
+  creadoEn   DateTime  @default(now()) @map("creado_en")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("refresh_token")
 }
