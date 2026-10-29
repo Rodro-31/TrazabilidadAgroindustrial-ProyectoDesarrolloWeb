@@ -1,5 +1,8 @@
 // Esquema base. Es el CONTRATO entre Integrante 1 (Victor) e Integrante 2.
 // Cambios: avisar al equipo antes del merge.
+//
+// Restricciones CHECK que Prisma no expresa: se agregan a mano en la migración
+// (ver api/prisma/checks.sql).
 
 generator client {
   provider = "prisma-client-js"
@@ -32,6 +35,81 @@ enum EstadoProducto {
   ORO
 }
 
+// ---------------------------------------------------------------------------
+// Enums del dominio (Integrante 2)
+// ---------------------------------------------------------------------------
+
+enum TipoOrganizacion {
+  COOPERATIVA
+  ASOCIACION
+  EMPRESA
+  OTRA
+}
+
+enum EstadoLote {
+  ACTIVO // en bodega, disponible
+  EN_TRANSITO // trasladándose entre centros
+  EN_PROCESO // en secado, limpieza, clasificación...
+  AGOTADO // sin existencia (todo se trasladó, procesó o vendió)
+  VENDIDO
+  ANULADO
+}
+
+enum TipoRelacionLote {
+  MEZCLA // varios padres -> un hijo
+  DIVISION // un padre -> varios hijos
+  TRANSFORMACION // un padre -> un hijo con otro estado de producto
+}
+
+enum TipoProceso {
+  MEZCLA
+  DIVISION
+  SECADO // uva -> pergamino
+  LIMPIEZA // pergamino -> oro
+  CLASIFICACION
+}
+
+enum TipoMovimiento {
+  ENTRADA_RECEPCION
+  ENTRADA_TRASLADO
+  ENTRADA_PROCESO
+  SALIDA_TRASLADO
+  SALIDA_PROCESO
+  SALIDA_VENTA
+  AJUSTE
+}
+
+enum EstadoTraslado {
+  PENDIENTE // solicitado, esperando despacho
+  EN_TRANSITO // despachado, esperando confirmación con token en destino
+  RECIBIDO
+  CANCELADO
+}
+
+enum EstadoLiquidacion {
+  BORRADOR
+  APROBADA
+  PAGADA
+  ANULADA
+}
+
+enum TipoTarea {
+  INSPECCION_CALIDAD
+  CONFIRMAR_TRASLADO
+  APROBAR_PROCESO
+  APROBAR_LIQUIDACION
+}
+
+enum EstadoTarea {
+  PENDIENTE
+  COMPLETADA
+  CANCELADA
+}
+
+// ---------------------------------------------------------------------------
+// Seguridad (Integrante 1)
+// ---------------------------------------------------------------------------
+
 model Usuario {
   id               String    @id @default(uuid())
   email            String    @unique
@@ -49,19 +127,22 @@ model Usuario {
   auditorias    Auditoria[]     @relation("AuditoriaUsuario")
   refreshTokens RefreshToken[]
 
+  // Relaciones inversas del dominio (Integrante 2)
+  lotesCreados           Lote[]                 @relation("LoteCreador")
+  cambiosEstadoLote      LoteEstadoHistorial[]  @relation("CambioEstadoUsuario")
+  inspecciones           InspeccionCalidad[]    @relation("Inspector")
+  movimientos            MovimientoInventario[] @relation("MovimientoUsuario")
+  trasladosSolicitados   Traslado[]             @relation("TrasladoSolicitante")
+  trasladosRecibidos     Traslado[]             @relation("TrasladoReceptor")
+  procesosRealizados     Proceso[]              @relation("ProcesoResponsable")
+  procesosAprobados      Proceso[]              @relation("ProcesoAprobador")
+  preciosCreados         Precio[]               @relation("PrecioCreador")
+  liquidacionesCreadas   Liquidacion[]          @relation("LiquidacionCreador")
+  liquidacionesAprobadas Liquidacion[]          @relation("LiquidacionAprobador")
+  ventas                 Venta[]                @relation("VentaRegistrador")
+  tareas                 Tarea[]                @relation("TareaAsignada")
+
   @@map("usuario")
-}
-
-model Centro {
-  id       String   @id @default(uuid())
-  codigo   String   @unique
-  nombre   String
-  creadoEn DateTime @default(now()) @map("creado_en")
-
-  usuarios    UsuarioCentro[]
-  recepciones Recepcion[]
-
-  @@map("centro")
 }
 
 model UsuarioCentro {
@@ -75,67 +156,511 @@ model UsuarioCentro {
   @@map("usuario_centro")
 }
 
+// ---------------------------------------------------------------------------
+// Actores y catálogos
+// ---------------------------------------------------------------------------
+
+model Centro {
+  id           String   @id @default(uuid())
+  codigo       String   @unique
+  nombre       String
+  municipio    String?
+  departamento String?
+  direccion    String?
+  telefono     String?
+  activo       Boolean  @default(true)
+  creadoEn     DateTime @default(now()) @map("creado_en")
+
+  usuarios         UsuarioCentro[]
+  recepciones      Recepcion[]
+  lotes            Lote[]
+  existencias      Existencia[]
+  movimientos      MovimientoInventario[]
+  trasladosOrigen  Traslado[]             @relation("TrasladoOrigen")
+  trasladosDestino Traslado[]             @relation("TrasladoDestino")
+  procesos         Proceso[]
+  ventas           Venta[]
+
+  @@map("centro")
+}
+
+model Organizacion {
+  id       String           @id @default(uuid())
+  nombre   String           @unique
+  tipo     TipoOrganizacion
+  nit      String?          @unique
+  telefono String?
+  activo   Boolean          @default(true)
+  creadoEn DateTime         @default(now()) @map("creado_en")
+
+  productores Productor[]
+
+  @@map("organizacion")
+}
+
 model Productor {
-  id       String   @id @default(uuid())
-  nombre   String
-  creadoEn DateTime @default(now()) @map("creado_en")
+  id             String   @id @default(uuid())
+  codigo         String   @unique
+  nombre         String
+  // Documento de identidad (DPI). Dato sensible: no se expone en QR ni en listas públicas.
+  dpi            String?  @unique
+  telefono       String?
+  municipio      String?
+  departamento   String?
+  organizacionId String?  @map("organizacion_id")
+  activo         Boolean  @default(true)
+  creadoEn       DateTime @default(now()) @map("creado_en")
 
-  fincas      Finca[]
-  recepciones Recepcion[]
+  organizacion  Organizacion? @relation(fields: [organizacionId], references: [id])
+  fincas        Finca[]
+  recepciones   Recepcion[]
+  liquidaciones Liquidacion[]
 
+  @@index([nombre])
+  @@index([organizacionId])
   @@map("productor")
 }
 
 model Finca {
-  id          String   @id @default(uuid())
-  productorId String   @map("productor_id")
-  nombre      String
-  creadoEn    DateTime @default(now()) @map("creado_en")
+  id           String   @id @default(uuid())
+  productorId  String   @map("productor_id")
+  nombre       String
+  municipio    String?
+  departamento String?
+  altitudMsnm  Int?     @map("altitud_msnm")
+  areaHa       Decimal? @map("area_ha") @db.Decimal(10, 2)
+  latitud      Decimal? @db.Decimal(9, 6)
+  longitud     Decimal? @db.Decimal(9, 6)
+  activo       Boolean  @default(true)
+  creadoEn     DateTime @default(now()) @map("creado_en")
 
   productor   Productor   @relation(fields: [productorId], references: [id])
   recepciones Recepcion[]
 
+  @@unique([productorId, nombre])
   @@index([productorId])
   @@map("finca")
 }
 
+model Comprador {
+  id       String   @id @default(uuid())
+  nombre   String
+  nit      String?  @unique
+  pais     String
+  contacto String?
+  email    String?
+  telefono String?
+  activo   Boolean  @default(true)
+  creadoEn DateTime @default(now()) @map("creado_en")
+
+  ventas Venta[]
+
+  @@index([nombre])
+  @@map("comprador")
+}
+
+// Grados de calidad configurables por el administrador (no fijos en código).
+model GradoCalidad {
+  id          String  @id @default(uuid())
+  codigo      String  @unique
+  nombre      String
+  descripcion String?
+  orden       Int     @default(0)
+  activo      Boolean @default(true)
+
+  lotes        Lote[]
+  inspecciones InspeccionCalidad[]
+  precios      Precio[]
+
+  @@map("grado_calidad")
+}
+
+// ---------------------------------------------------------------------------
+// Recepciones (Integrante 1)
+// ---------------------------------------------------------------------------
+
 // El id lo genera el cliente (PWA o web) para garantizar idempotencia.
 model Recepcion {
-  id             String          @id
-  centroId       String          @map("centro_id")
-  productorId    String          @map("productor_id")
-  fincaId        String          @map("finca_id")
-  estadoProducto EstadoProducto  @map("estado_producto")
-  pesoBrutoKg    Decimal         @map("peso_bruto_kg") @db.Decimal(12, 2)
-  taraKg         Decimal         @default(0) @map("tara_kg") @db.Decimal(12, 2)
-  pesoNetoKg     Decimal         @map("peso_neto_kg") @db.Decimal(12, 2)
-  humedadPct     Decimal?        @map("humedad_pct") @db.Decimal(5, 2)
-  observaciones  String?
-  capturadoEn    DateTime        @map("capturado_en")
+  id              String         @id
+  centroId        String         @map("centro_id")
+  productorId     String         @map("productor_id")
+  fincaId         String         @map("finca_id")
+  estadoProducto  EstadoProducto @map("estado_producto")
+  pesoBrutoKg     Decimal        @map("peso_bruto_kg") @db.Decimal(12, 2)
+  taraKg          Decimal        @default(0) @map("tara_kg") @db.Decimal(12, 2)
+  pesoNetoKg      Decimal        @map("peso_neto_kg") @db.Decimal(12, 2)
+  humedadPct      Decimal?       @map("humedad_pct") @db.Decimal(5, 2)
+  observaciones   String?
+  capturadoEn     DateTime       @map("capturado_en")
   registradoPorId String         @map("registrado_por_id")
-  creadoEn       DateTime        @default(now()) @map("creado_en")
+  creadoEn        DateTime       @default(now()) @map("creado_en")
 
-  centro       Centro    @relation(fields: [centroId], references: [id])
-  productor    Productor @relation(fields: [productorId], references: [id])
-  finca        Finca     @relation(fields: [fincaId], references: [id])
-  registradoPor Usuario  @relation("RegistradoPor", fields: [registradoPorId], references: [id])
+  centro        Centro    @relation(fields: [centroId], references: [id])
+  productor     Productor @relation(fields: [productorId], references: [id])
+  finca         Finca     @relation(fields: [fincaId], references: [id])
+  registradoPor Usuario   @relation("RegistradoPor", fields: [registradoPorId], references: [id])
+
+  // Relaciones inversas del dominio (Integrante 2)
+  lotes        LoteOrigenRecepcion[]
+  inspecciones InspeccionCalidad[]
+  liquidacion  LiquidacionDetalle?
 
   @@index([productorId])
   @@index([centroId])
   @@map("recepcion")
 }
 
+// ---------------------------------------------------------------------------
+// Lotes y trazabilidad (Integrante 2)
+// ---------------------------------------------------------------------------
+
+model Lote {
+  id             String         @id @default(uuid())
+  codigo         String         @unique
+  centroId       String         @map("centro_id") // centro donde se creó
+  estadoProducto EstadoProducto @map("estado_producto")
+  gradoCalidadId String?        @map("grado_calidad_id")
+  estado         EstadoLote     @default(ACTIVO)
+  pesoInicialKg  Decimal        @map("peso_inicial_kg") @db.Decimal(12, 2)
+  cosecha        Int // año de cosecha, ej. 2026
+  observaciones  String?
+  creadoPorId    String         @map("creado_por_id")
+  creadoEn       DateTime       @default(now()) @map("creado_en")
+  actualizadoEn  DateTime       @updatedAt @map("actualizado_en")
+
+  centro       Centro        @relation(fields: [centroId], references: [id])
+  gradoCalidad GradoCalidad? @relation(fields: [gradoCalidadId], references: [id])
+  creadoPor    Usuario       @relation("LoteCreador", fields: [creadoPorId], references: [id])
+
+  // Origen: un lote nace de recepciones o de otros lotes (nunca sin origen).
+  recepciones LoteOrigenRecepcion[]
+  padres      LoteRelacion[]        @relation("LoteHijo")
+  hijos       LoteRelacion[]        @relation("LotePadre")
+
+  historialEstados LoteEstadoHistorial[]
+  inspecciones     InspeccionCalidad[]
+  existencias      Existencia[]
+  movimientos      MovimientoInventario[]
+  traslados        Traslado[]
+  ventas           Venta[]
+
+  @@index([centroId])
+  @@index([estado])
+  @@index([estadoProducto, gradoCalidadId])
+  @@map("lote")
+}
+
+model LoteOrigenRecepcion {
+  loteId      String  @map("lote_id")
+  recepcionId String  @map("recepcion_id")
+  cantidadKg  Decimal @map("cantidad_kg") @db.Decimal(12, 2)
+
+  lote      Lote      @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  recepcion Recepcion @relation(fields: [recepcionId], references: [id])
+
+  @@id([loteId, recepcionId])
+  @@index([recepcionId])
+  @@map("lote_origen_recepcion")
+}
+
+// Aristas del grafo de lotes. Trazabilidad con WITH RECURSIVE sobre esta tabla.
+model LoteRelacion {
+  id         String           @id @default(uuid())
+  padreId    String           @map("padre_id")
+  hijoId     String           @map("hijo_id")
+  procesoId  String           @map("proceso_id")
+  tipo       TipoRelacionLote
+  cantidadKg Decimal          @map("cantidad_kg") @db.Decimal(12, 2)
+  creadoEn   DateTime         @default(now()) @map("creado_en")
+
+  padre   Lote    @relation("LotePadre", fields: [padreId], references: [id])
+  hijo    Lote    @relation("LoteHijo", fields: [hijoId], references: [id])
+  proceso Proceso @relation(fields: [procesoId], references: [id])
+
+  @@unique([padreId, hijoId, procesoId])
+  @@index([padreId])
+  @@index([hijoId])
+  @@map("lote_relacion")
+}
+
+model LoteEstadoHistorial {
+  id             String      @id @default(uuid())
+  loteId         String      @map("lote_id")
+  estadoAnterior EstadoLote? @map("estado_anterior")
+  estadoNuevo    EstadoLote  @map("estado_nuevo")
+  motivo         String?
+  usuarioId      String      @map("usuario_id")
+  creadoEn       DateTime    @default(now()) @map("creado_en")
+
+  lote    Lote    @relation(fields: [loteId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation("CambioEstadoUsuario", fields: [usuarioId], references: [id])
+
+  @@index([loteId, creadoEn])
+  @@map("lote_estado_historial")
+}
+
+// ---------------------------------------------------------------------------
+// Calidad (Integrante 2)
+// ---------------------------------------------------------------------------
+
+// El id lo genera el cliente (PWA o web) para idempotencia, igual que Recepcion.
+// Se inspecciona una recepción o un lote (exactamente uno: ver checks.sql).
+model InspeccionCalidad {
+  id              String   @id
+  recepcionId     String?  @map("recepcion_id")
+  loteId          String?  @map("lote_id")
+  gradoCalidadId  String?  @map("grado_calidad_id")
+  humedadPct      Decimal? @map("humedad_pct") @db.Decimal(5, 2)
+  impurezasPct    Decimal? @map("impurezas_pct") @db.Decimal(5, 2)
+  defectosPct     Decimal? @map("defectos_pct") @db.Decimal(5, 2)
+  aprobado        Boolean
+  observaciones   String?
+  inspectorId     String   @map("inspector_id")
+  inspeccionadoEn DateTime @map("inspeccionado_en")
+  creadoEn        DateTime @default(now()) @map("creado_en")
+
+  recepcion    Recepcion?    @relation(fields: [recepcionId], references: [id])
+  lote         Lote?         @relation(fields: [loteId], references: [id])
+  gradoCalidad GradoCalidad? @relation(fields: [gradoCalidadId], references: [id])
+  inspector    Usuario       @relation("Inspector", fields: [inspectorId], references: [id])
+
+  @@index([recepcionId])
+  @@index([loteId, inspeccionadoEn])
+  @@map("inspeccion_calidad")
+}
+
+// ---------------------------------------------------------------------------
+// Inventario (Integrante 2)
+// ---------------------------------------------------------------------------
+
+// Saldo actual de cada lote en cada centro. Nunca negativo (ver checks.sql).
+// Se modifica solo dentro de transacciones que también insertan un MovimientoInventario.
+model Existencia {
+  loteId        String   @map("lote_id")
+  centroId      String   @map("centro_id")
+  cantidadKg    Decimal  @default(0) @map("cantidad_kg") @db.Decimal(12, 2)
+  actualizadoEn DateTime @updatedAt @map("actualizado_en")
+
+  lote   Lote   @relation(fields: [loteId], references: [id])
+  centro Centro @relation(fields: [centroId], references: [id])
+
+  @@id([loteId, centroId])
+  @@index([centroId])
+  @@map("existencia")
+}
+
+// Libro de movimientos (solo se inserta, nunca se modifica).
+// cantidadKg es positiva en entradas y negativa en salidas.
+model MovimientoInventario {
+  id             String         @id @default(uuid())
+  loteId         String         @map("lote_id")
+  centroId       String         @map("centro_id")
+  tipo           TipoMovimiento
+  cantidadKg     Decimal        @map("cantidad_kg") @db.Decimal(12, 2)
+  saldoKg        Decimal        @map("saldo_kg") @db.Decimal(12, 2)
+  referenciaTipo String?        @map("referencia_tipo") // RECEPCION, TRASLADO, PROCESO, VENTA
+  referenciaId   String?        @map("referencia_id")
+  motivo         String?
+  usuarioId      String         @map("usuario_id")
+  creadoEn       DateTime       @default(now()) @map("creado_en")
+
+  lote    Lote    @relation(fields: [loteId], references: [id])
+  centro  Centro  @relation(fields: [centroId], references: [id])
+  usuario Usuario @relation("MovimientoUsuario", fields: [usuarioId], references: [id])
+
+  @@index([loteId, creadoEn])
+  @@index([centroId, creadoEn])
+  @@index([referenciaTipo, referenciaId])
+  @@map("movimiento_inventario")
+}
+
+// ---------------------------------------------------------------------------
+// Traslados y procesos (Integrante 2)
+// ---------------------------------------------------------------------------
+
+// La confirmación en destino usa un Token CONFIRMACION_TRASLADO
+// (entidadTipo = "TRASLADO", entidadId = Traslado.id).
+model Traslado {
+  id                 String         @id @default(uuid())
+  codigo             String         @unique
+  loteId             String         @map("lote_id")
+  origenId           String         @map("origen_id")
+  destinoId          String         @map("destino_id")
+  cantidadKg         Decimal        @map("cantidad_kg") @db.Decimal(12, 2)
+  cantidadRecibidaKg Decimal?       @map("cantidad_recibida_kg") @db.Decimal(12, 2)
+  estado             EstadoTraslado @default(PENDIENTE)
+  observaciones      String?
+  solicitadoPorId    String         @map("solicitado_por_id")
+  recibidoPorId      String?        @map("recibido_por_id")
+  solicitadoEn       DateTime       @default(now()) @map("solicitado_en")
+  despachadoEn       DateTime?      @map("despachado_en")
+  recibidoEn         DateTime?      @map("recibido_en")
+
+  lote          Lote     @relation(fields: [loteId], references: [id])
+  origen        Centro   @relation("TrasladoOrigen", fields: [origenId], references: [id])
+  destino       Centro   @relation("TrasladoDestino", fields: [destinoId], references: [id])
+  solicitadoPor Usuario  @relation("TrasladoSolicitante", fields: [solicitadoPorId], references: [id])
+  recibidoPor   Usuario? @relation("TrasladoReceptor", fields: [recibidoPorId], references: [id])
+
+  @@index([loteId])
+  @@index([estado])
+  @@index([origenId])
+  @@index([destinoId])
+  @@map("traslado")
+}
+
+// Mezcla, división o transformación. Sus entradas/salidas están en LoteRelacion.
+model Proceso {
+  id             String      @id @default(uuid())
+  codigo         String      @unique
+  tipo           TipoProceso
+  centroId       String      @map("centro_id")
+  mermaKg        Decimal     @default(0) @map("merma_kg") @db.Decimal(12, 2)
+  observaciones  String?
+  realizadoPorId String      @map("realizado_por_id")
+  aprobadoPorId  String?     @map("aprobado_por_id")
+  realizadoEn    DateTime    @map("realizado_en")
+  creadoEn       DateTime    @default(now()) @map("creado_en")
+
+  centro       Centro         @relation(fields: [centroId], references: [id])
+  realizadoPor Usuario        @relation("ProcesoResponsable", fields: [realizadoPorId], references: [id])
+  aprobadoPor  Usuario?       @relation("ProcesoAprobador", fields: [aprobadoPorId], references: [id])
+  relaciones   LoteRelacion[]
+
+  @@index([centroId, realizadoEn])
+  @@map("proceso")
+}
+
+// ---------------------------------------------------------------------------
+// Precios, liquidaciones y ventas (Integrante 2)
+// ---------------------------------------------------------------------------
+
+model Precio {
+  id             String         @id @default(uuid())
+  estadoProducto EstadoProducto @map("estado_producto")
+  gradoCalidadId String?        @map("grado_calidad_id")
+  precioPorKg    Decimal        @map("precio_por_kg") @db.Decimal(12, 2)
+  moneda         String         @default("GTQ")
+  vigenteDesde   DateTime       @map("vigente_desde")
+  vigenteHasta   DateTime?      @map("vigente_hasta")
+  creadoPorId    String         @map("creado_por_id")
+  creadoEn       DateTime       @default(now()) @map("creado_en")
+
+  gradoCalidad GradoCalidad? @relation(fields: [gradoCalidadId], references: [id])
+  creadoPor    Usuario       @relation("PrecioCreador", fields: [creadoPorId], references: [id])
+
+  @@index([estadoProducto, gradoCalidadId, vigenteDesde])
+  @@map("precio")
+}
+
+model Liquidacion {
+  id            String            @id @default(uuid())
+  codigo        String            @unique
+  productorId   String            @map("productor_id")
+  periodoInicio DateTime          @map("periodo_inicio") @db.Date
+  periodoFin    DateTime          @map("periodo_fin") @db.Date
+  totalKg       Decimal           @map("total_kg") @db.Decimal(14, 2)
+  totalMonto    Decimal           @map("total_monto") @db.Decimal(14, 2)
+  moneda        String            @default("GTQ")
+  estado        EstadoLiquidacion @default(BORRADOR)
+  creadoPorId   String            @map("creado_por_id")
+  aprobadoPorId String?           @map("aprobado_por_id")
+  aprobadoEn    DateTime?         @map("aprobado_en")
+  pagadoEn      DateTime?         @map("pagado_en")
+  creadoEn      DateTime          @default(now()) @map("creado_en")
+
+  productor   Productor            @relation(fields: [productorId], references: [id])
+  creadoPor   Usuario              @relation("LiquidacionCreador", fields: [creadoPorId], references: [id])
+  aprobadoPor Usuario?             @relation("LiquidacionAprobador", fields: [aprobadoPorId], references: [id])
+  detalles    LiquidacionDetalle[]
+
+  @@index([productorId, periodoInicio])
+  @@index([estado])
+  @@map("liquidacion")
+}
+
+// Una recepción se liquida una sola vez (recepcionId único).
+model LiquidacionDetalle {
+  id            String  @id @default(uuid())
+  liquidacionId String  @map("liquidacion_id")
+  recepcionId   String  @unique @map("recepcion_id")
+  pesoKg        Decimal @map("peso_kg") @db.Decimal(12, 2)
+  precioPorKg   Decimal @map("precio_por_kg") @db.Decimal(12, 2)
+  subtotal      Decimal @db.Decimal(14, 2)
+
+  liquidacion Liquidacion @relation(fields: [liquidacionId], references: [id], onDelete: Cascade)
+  recepcion   Recepcion   @relation(fields: [recepcionId], references: [id])
+
+  @@index([liquidacionId])
+  @@map("liquidacion_detalle")
+}
+
+model Venta {
+  id              String   @id @default(uuid())
+  codigo          String   @unique
+  loteId          String   @map("lote_id")
+  centroId        String   @map("centro_id") // centro desde donde sale
+  compradorId     String   @map("comprador_id")
+  cantidadKg      Decimal  @map("cantidad_kg") @db.Decimal(12, 2)
+  precioPorKg     Decimal? @map("precio_por_kg") @db.Decimal(12, 2)
+  moneda          String   @default("USD")
+  destino         String? // país o puerto de destino
+  vendidoEn       DateTime @map("vendido_en")
+  registradoPorId String   @map("registrado_por_id")
+  creadoEn        DateTime @default(now()) @map("creado_en")
+
+  lote          Lote      @relation(fields: [loteId], references: [id])
+  centro        Centro    @relation(fields: [centroId], references: [id])
+  comprador     Comprador @relation(fields: [compradorId], references: [id])
+  registradoPor Usuario   @relation("VentaRegistrador", fields: [registradoPorId], references: [id])
+
+  @@index([loteId])
+  @@index([compradorId, vendidoEn])
+  @@map("venta")
+}
+
+// ---------------------------------------------------------------------------
+// Tareas pendientes (para la PWA y la web)
+// ---------------------------------------------------------------------------
+
+// Se asigna a un usuario concreto o a todos los de un rol.
+model Tarea {
+  id           String      @id @default(uuid())
+  tipo         TipoTarea
+  titulo       String
+  usuarioId    String?     @map("usuario_id")
+  rol          Rol?
+  centroId     String?     @map("centro_id")
+  entidadTipo  String      @map("entidad_tipo")
+  entidadId    String      @map("entidad_id")
+  estado       EstadoTarea @default(PENDIENTE)
+  venceEn      DateTime?   @map("vence_en")
+  creadoEn     DateTime    @default(now()) @map("creado_en")
+  completadaEn DateTime?   @map("completada_en")
+
+  usuario Usuario? @relation("TareaAsignada", fields: [usuarioId], references: [id])
+
+  @@index([usuarioId, estado])
+  @@index([rol, estado])
+  @@index([entidadTipo, entidadId])
+  @@map("tarea")
+}
+
+// ---------------------------------------------------------------------------
+// Tokens, archivos y auditoría (Integrante 1)
+// ---------------------------------------------------------------------------
+
 model Token {
-  id            String         @id @default(uuid())
-  valorHash     String         @unique @map("valor_hash")
-  proposito     PropositoToken
-  entidadTipo   String         @map("entidad_tipo")
-  entidadId     String         @map("entidad_id")
-  expiraEn      DateTime?      @map("expira_en")
-  usadoEn       DateTime?      @map("usado_en")
-  revocadoEn    DateTime?      @map("revocado_en")
-  creadoPorId   String?        @map("creado_por_id")
-  creadoEn      DateTime       @default(now()) @map("creado_en")
+  id          String         @id @default(uuid())
+  valorHash   String         @unique @map("valor_hash")
+  proposito   PropositoToken
+  entidadTipo String         @map("entidad_tipo")
+  entidadId   String         @map("entidad_id")
+  expiraEn    DateTime?      @map("expira_en")
+  usadoEn     DateTime?      @map("usado_en")
+  revocadoEn  DateTime?      @map("revocado_en")
+  creadoPorId String?        @map("creado_por_id")
+  creadoEn    DateTime       @default(now()) @map("creado_en")
 
   creadoPor Usuario? @relation("TokenCreador", fields: [creadoPorId], references: [id])
 
@@ -144,30 +669,30 @@ model Token {
 }
 
 model Archivo {
-  id          String   @id @default(uuid())
-  entidadTipo String   @map("entidad_tipo")
-  entidadId   String   @map("entidad_id")
-  claveStorage String  @map("clave_storage")
-  mime        String
-  tamanoBytes Int      @map("tamano_bytes")
-  subidoPorId String?  @map("subido_por_id")
-  creadoEn    DateTime @default(now()) @map("creado_en")
+  id           String   @id @default(uuid())
+  entidadTipo  String   @map("entidad_tipo")
+  entidadId    String   @map("entidad_id")
+  claveStorage String   @map("clave_storage")
+  mime         String
+  tamanoBytes  Int      @map("tamano_bytes")
+  subidoPorId  String?  @map("subido_por_id")
+  creadoEn     DateTime @default(now()) @map("creado_en")
 
   @@index([entidadTipo, entidadId])
   @@map("archivo")
 }
 
 model Auditoria {
-  id         String   @id @default(uuid())
-  usuarioId  String?  @map("usuario_id")
-  accion     String
-  entidad    String
-  entidadId  String?  @map("entidad_id")
-  antes      Json?
-  despues    Json?
-  ip         String?
-  userAgent  String?  @map("user_agent")
-  creadoEn   DateTime @default(now()) @map("creado_en")
+  id        String   @id @default(uuid())
+  usuarioId String?  @map("usuario_id")
+  accion    String
+  entidad   String
+  entidadId String?  @map("entidad_id")
+  antes     Json?
+  despues   Json?
+  ip        String?
+  userAgent String?  @map("user_agent")
+  creadoEn  DateTime @default(now()) @map("creado_en")
 
   usuario Usuario? @relation("AuditoriaUsuario", fields: [usuarioId], references: [id])
 
@@ -175,6 +700,7 @@ model Auditoria {
   @@index([creadoEn])
   @@map("auditoria")
 }
+
 
 // Refresh tokens: se guarda solo el hash SHA-256. Cada uso revoca el anterior (rotación).
 model RefreshToken {
