@@ -1,0 +1,11 @@
+app.{$DOMINIO} {
+	reverse_proxy web:80
+}
+
+campo.{$DOMINIO} {
+	reverse_proxy pwa:80
+}
+
+api.{$DOMINIO} {
+	reverse_proxy api:3000
+}

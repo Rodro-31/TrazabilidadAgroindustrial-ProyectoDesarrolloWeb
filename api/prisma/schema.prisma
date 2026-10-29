@@ -1,0 +1,176 @@
+// Esquema base. Es el CONTRATO entre Integrante 1 (Victor) e Integrante 2.
+// Cambios: avisar al equipo antes del merge.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMIN
+  SUPERVISOR
+  CALIDAD
+  BASCULA
+  CAMPO
+  AUDITOR
+}
+
+enum PropositoToken {
+  QR_LOTE
+  QR_RECEPCION
+  CONFIRMACION_TRASLADO
+  RECUPERACION_PASSWORD
+}
+
+enum EstadoProducto {
+  UVA
+  PERGAMINO
+  ORO
+}
+
+model Usuario {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  nombre           String
+  passwordHash     String    @map("password_hash")
+  rol              Rol
+  activo           Boolean   @default(true)
+  intentosFallidos Int       @default(0) @map("intentos_fallidos")
+  bloqueadoHasta   DateTime? @map("bloqueado_hasta")
+  creadoEn         DateTime  @default(now()) @map("creado_en")
+
+  centros       UsuarioCentro[]
+  recepciones   Recepcion[]     @relation("RegistradoPor")
+  tokensCreados Token[]         @relation("TokenCreador")
+  auditorias    Auditoria[]     @relation("AuditoriaUsuario")
+
+  @@map("usuario")
+}
+
+model Centro {
+  id       String   @id @default(uuid())
+  codigo   String   @unique
+  nombre   String
+  creadoEn DateTime @default(now()) @map("creado_en")
+
+  usuarios    UsuarioCentro[]
+  recepciones Recepcion[]
+
+  @@map("centro")
+}
+
+model UsuarioCentro {
+  usuarioId String @map("usuario_id")
+  centroId  String @map("centro_id")
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  centro  Centro  @relation(fields: [centroId], references: [id], onDelete: Cascade)
+
+  @@id([usuarioId, centroId])
+  @@map("usuario_centro")
+}
+
+model Productor {
+  id       String   @id @default(uuid())
+  nombre   String
+  creadoEn DateTime @default(now()) @map("creado_en")
+
+  fincas      Finca[]
+  recepciones Recepcion[]
+
+  @@map("productor")
+}
+
+model Finca {
+  id          String   @id @default(uuid())
+  productorId String   @map("productor_id")
+  nombre      String
+  creadoEn    DateTime @default(now()) @map("creado_en")
+
+  productor   Productor   @relation(fields: [productorId], references: [id])
+  recepciones Recepcion[]
+
+  @@index([productorId])
+  @@map("finca")
+}
+
+// El id lo genera el cliente (PWA o web) para garantizar idempotencia.
+model Recepcion {
+  id             String          @id
+  centroId       String          @map("centro_id")
+  productorId    String          @map("productor_id")
+  fincaId        String          @map("finca_id")
+  estadoProducto EstadoProducto  @map("estado_producto")
+  pesoBrutoKg    Decimal         @map("peso_bruto_kg") @db.Decimal(12, 2)
+  taraKg         Decimal         @default(0) @map("tara_kg") @db.Decimal(12, 2)
+  pesoNetoKg     Decimal         @map("peso_neto_kg") @db.Decimal(12, 2)
+  humedadPct     Decimal?        @map("humedad_pct") @db.Decimal(5, 2)
+  observaciones  String?
+  capturadoEn    DateTime        @map("capturado_en")
+  registradoPorId String         @map("registrado_por_id")
+  creadoEn       DateTime        @default(now()) @map("creado_en")
+
+  centro       Centro    @relation(fields: [centroId], references: [id])
+  productor    Productor @relation(fields: [productorId], references: [id])
+  finca        Finca     @relation(fields: [fincaId], references: [id])
+  registradoPor Usuario  @relation("RegistradoPor", fields: [registradoPorId], references: [id])
+
+  @@index([productorId])
+  @@index([centroId])
+  @@map("recepcion")
+}
+
+model Token {
+  id            String         @id @default(uuid())
+  valorHash     String         @unique @map("valor_hash")
+  proposito     PropositoToken
+  entidadTipo   String         @map("entidad_tipo")
+  entidadId     String         @map("entidad_id")
+  expiraEn      DateTime?      @map("expira_en")
+  usadoEn       DateTime?      @map("usado_en")
+  revocadoEn    DateTime?      @map("revocado_en")
+  creadoPorId   String?        @map("creado_por_id")
+  creadoEn      DateTime       @default(now()) @map("creado_en")
+
+  creadoPor Usuario? @relation("TokenCreador", fields: [creadoPorId], references: [id])
+
+  @@index([entidadTipo, entidadId])
+  @@map("token")
+}
+
+model Archivo {
+  id          String   @id @default(uuid())
+  entidadTipo String   @map("entidad_tipo")
+  entidadId   String   @map("entidad_id")
+  claveStorage String  @map("clave_storage")
+  mime        String
+  tamanoBytes Int      @map("tamano_bytes")
+  subidoPorId String?  @map("subido_por_id")
+  creadoEn    DateTime @default(now()) @map("creado_en")
+
+  @@index([entidadTipo, entidadId])
+  @@map("archivo")
+}
+
+model Auditoria {
+  id         String   @id @default(uuid())
+  usuarioId  String?  @map("usuario_id")
+  accion     String
+  entidad    String
+  entidadId  String?  @map("entidad_id")
+  antes      Json?
+  despues    Json?
+  ip         String?
+  userAgent  String?  @map("user_agent")
+  creadoEn   DateTime @default(now()) @map("creado_en")
+
+  usuario Usuario? @relation("AuditoriaUsuario", fields: [usuarioId], references: [id])
+
+  @@index([entidad, entidadId])
+  @@index([creadoEn])
+  @@map("auditoria")
+}

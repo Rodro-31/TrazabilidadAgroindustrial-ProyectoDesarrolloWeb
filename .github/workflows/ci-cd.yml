@@ -1,0 +1,80 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: API - instalar, probar y compilar
+        working-directory: api
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Web - compilar
+        working-directory: web
+        run: |
+          npm ci
+          npm run build
+
+      - name: PWA - compilar
+        working-directory: pwa
+        run: |
+          npm ci
+          npm run build
+
+  build-push:
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Construir y publicar imágenes
+        run: |
+          for svc in api web pwa; do
+            IMG=ghcr.io/rodro-31/trazabilidad-$svc
+            docker build -t $IMG:sha-$GITHUB_SHA -t $IMG:latest ./$svc
+            docker push $IMG:sha-$GITHUB_SHA
+            docker push $IMG:latest
+          done
+
+  deploy:
+    needs: build-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/trazabilidad
+            git pull origin main
+            docker compose --env-file .env -f deploy/docker-compose.prod.yml pull
+            docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d
+            docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T api npx prisma migrate deploy

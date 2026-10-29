@@ -1,0 +1,45 @@
+name: trazabilidad
+
+services:
+  db:
+    image: postgres:16-alpine
+    env_file: ../.env
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    image: ghcr.io/rodro-31/trazabilidad-api:latest
+    env_file: ../.env
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  web:
+    image: ghcr.io/rodro-31/trazabilidad-web:latest
+    restart: unless-stopped
+
+  pwa:
+    image: ghcr.io/rodro-31/trazabilidad-pwa:latest
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    env_file: ../.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+      - pwa
+      - api
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
