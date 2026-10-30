@@ -27,11 +27,14 @@ PWA: http://localhost:8082
 Sin Docker (solo API):
 
 cd api
+
 npm install
+
 npx prisma generate
+
 npm run start:dev
 
-Reglas del equipo
+## Reglas del equipo
 Ramas feat/<tema> y Pull Request a main. Cada merge a main se despliega.
 
 No subir secretos ni .env.
@@ -40,7 +43,7 @@ Cambios a api/prisma/schema.prisma se avisan al equipo antes del merge.
 
 Antes de subir el primer commit de cada carpeta, ejecuta npm install y sube package-lock.json (el pipeline usa npm ci).
 
-Pendiente antes de la entrega
+## Pendiente antes de la entrega
 [ ] Iconos de la PWA: pwa/public/icon-192.png, pwa/public/icon-512.png y maskable.
 
 [ ] Migraciones de Prisma: npx prisma migrate dev --name init dentro de api/.
@@ -49,7 +52,7 @@ Pendiente antes de la entrega
 
 [ ] Servidor de producción con el repo clonado en /opt/trazabilidad y .env propio.
 
-Variables de Entorno (Ejemplo)
+## Variables de Entorno (Ejemplo)
 # Base de Datos
 DATABASE_URL="postgresql://usuario:password@localhost:5432/trazabilidad"
 
@@ -64,7 +67,7 @@ S3_ACCESS_KEY="[[PENDIENTE: Access Key]]"
 S3_SECRET_KEY="[[PENDIENTE: Secret Key]]"
 S3_BUCKET="trazabilidad-archivos"
 
-Despliegue y URLs de Producción
+## Despliegue y URLs de Producción
 El proyecto cuenta con integración y despliegue continuo (CI/CD) mediante GitHub Actions. Cada cambio integrado en la rama main construye automáticamente las imágenes en ghcr.io y actualiza el servidor en DigitalOcean.
 
 Aplicación Web (Admin): [[PENDIENTE: URL Web]]
@@ -73,13 +76,14 @@ Aplicación PWA (Campo): [[PENDIENTE: URL PWA]]
 
 Documentación API (Swagger): [[PENDIENTE: URL Swagger]]
 
-Usuarios Demo
+## Usuarios Demo
 Para evaluar la plataforma, puedes utilizar las siguientes credenciales de prueba según el rol deseado:
 
-Rol	Correo Electrónico	Contraseña
-Administrador	[[PENDIENTE: Correo Admin]]	[[PENDIENTE: Pass Admin]]
-Supervisor	[[PENDIENTE: Correo Supervisor]]	[[PENDIENTE: Pass Supervisor]]
-Calidad	[[PENDIENTE: Correo Calidad]]	[[PENDIENTE: Pass Calidad]]
-Báscula/Bodega	[[PENDIENTE: Correo Báscula]]	[[PENDIENTE: Pass Báscula]]
-Campo (PWA)	[[PENDIENTE: Correo Campo]]	[[PENDIENTE: Pass Campo]]
-Auditor	[[PENDIENTE: Correo Auditor]]	[[PENDIENTE: Pass Auditor]]
+| Rol | Correo Electrónico | Contraseña |
+|---|---|---|
+| Administrador | `[[PENDIENTE: Correo Admin]]` | `[[PENDIENTE: Pass Admin]]` |
+| Supervisor | `[[PENDIENTE: Correo Supervisor]]` | `[[PENDIENTE: Pass Supervisor]]` |
+| Calidad | `[[PENDIENTE: Correo Calidad]]` | `[[PENDIENTE: Pass Calidad]]` |
+| Báscula/Bodega | `[[PENDIENTE: Correo Báscula]]` | `[[PENDIENTE: Pass Báscula]]` |
+| Campo (PWA) | `[[PENDIENTE: Correo Campo]]` | `[[PENDIENTE: Pass Campo]]` |
+| Auditor | `[[PENDIENTE: Correo Auditor]]` | `[[PENDIENTE: Pass Auditor]]` |
