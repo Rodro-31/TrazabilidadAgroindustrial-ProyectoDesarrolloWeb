@@ -26,7 +26,6 @@ PWA: http://localhost:8082
 
 Sin Docker (solo API):
 
-Bash
 cd api
 npm install
 npx prisma generate
@@ -51,7 +50,6 @@ Pendiente antes de la entrega
 [ ] Servidor de producción con el repo clonado en /opt/trazabilidad y .env propio.
 
 Variables de Entorno (Ejemplo)
-
 # Base de Datos
 DATABASE_URL="postgresql://usuario:password@localhost:5432/trazabilidad"
 
@@ -65,6 +63,7 @@ S3_ENDPOINT="[[PENDIENTE: URL S3]]"
 S3_ACCESS_KEY="[[PENDIENTE: Access Key]]"
 S3_SECRET_KEY="[[PENDIENTE: Secret Key]]"
 S3_BUCKET="trazabilidad-archivos"
+
 Despliegue y URLs de Producción
 El proyecto cuenta con integración y despliegue continuo (CI/CD) mediante GitHub Actions. Cada cambio integrado en la rama main construye automáticamente las imágenes en ghcr.io y actualiza el servidor en DigitalOcean.
 
@@ -74,4 +73,13 @@ Aplicación PWA (Campo): [[PENDIENTE: URL PWA]]
 
 Documentación API (Swagger): [[PENDIENTE: URL Swagger]]
 
-Usuarios DemoPara evaluar la plataforma, puedes utilizar las siguientes credenciales de prueba según el rol deseado:RolCorreo ElectrónicoContraseñaAdministrador[[PENDIENTE: Correo Admin]][[PENDIENTE: Pass Admin]]Supervisor[[PENDIENTE: Correo Supervisor]][[PENDIENTE: Pass Supervisor]]Calidad[[PENDIENTE: Correo Calidad]][[PENDIENTE: Pass Calidad]]Báscula/Bodega[[PENDIENTE: Correo Báscula]][[PENDIENTE: Pass Báscula]]Campo (PWA)[[PENDIENTE: Correo Campo]][[PENDIENTE: Pass Campo]]Auditor[[PENDIENTE: Correo Auditor]][[PENDIENTE: Pass Auditor]]
+Usuarios Demo
+Para evaluar la plataforma, puedes utilizar las siguientes credenciales de prueba según el rol deseado:
+
+Rol	Correo Electrónico	Contraseña
+Administrador	[[PENDIENTE: Correo Admin]]	[[PENDIENTE: Pass Admin]]
+Supervisor	[[PENDIENTE: Correo Supervisor]]	[[PENDIENTE: Pass Supervisor]]
+Calidad	[[PENDIENTE: Correo Calidad]]	[[PENDIENTE: Pass Calidad]]
+Báscula/Bodega	[[PENDIENTE: Correo Báscula]]	[[PENDIENTE: Pass Báscula]]
+Campo (PWA)	[[PENDIENTE: Correo Campo]]	[[PENDIENTE: Pass Campo]]
+Auditor	[[PENDIENTE: Correo Auditor]]	[[PENDIENTE: Pass Auditor]]
