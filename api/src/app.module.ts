@@ -7,9 +7,11 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './auth/auth.module';
 import { ProductoresModule } from './catalogos/productores/productores.module';
 import { HealthController } from './health.controller';
+import { FincasModule } from './catalogos/fincas/fincas.module';
+import { CentrosModule } from './catalogos/centros/centros.module';
 
 @Module({
-  imports: [PrismaModule, JwtModule.register({ global: true }), AuthModule, ProductoresModule],
+  imports: [PrismaModule, JwtModule.register({ global: true }), AuthModule, ProductoresModule, FincasModule, CentrosModule],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
