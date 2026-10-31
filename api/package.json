@@ -6,7 +6,8 @@
     "build": "nest build",
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main.js",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "seed:demo": "ts-node --transpile-only prisma/seed-demo.ts"
   },
   "prisma": {
     "seed": "ts-node --transpile-only prisma/seed.ts"
