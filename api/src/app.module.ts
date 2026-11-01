@@ -11,6 +11,7 @@ import { FincasModule } from './catalogos/fincas/fincas.module';
 import { CentrosModule } from './catalogos/centros/centros.module';
 import { TokensModule } from './tokens/tokens.module';
 import { RecepcionesModule } from './recepciones/recepciones.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RecepcionesModule } from './recepciones/recepciones.module';
     CentrosModule,
     TokensModule,
     RecepcionesModule,
+    AuditoriaModule,
   ],
   controllers: [HealthController],
   providers: [

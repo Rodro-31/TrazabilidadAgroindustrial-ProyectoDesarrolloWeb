@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpStatus, Param, ParseUUIDPipe, Post, Query, R
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { Roles } from '../common/decorators/roles.decorator';
+import { Auditar } from '../auditoria/auditar.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 import { CrearRecepcionDto } from './dto/crear-recepcion.dto';
 import { ListarRecepcionesDto } from './dto/listar-recepciones.dto';
@@ -13,6 +14,7 @@ type UsuarioJwt = { sub: string; rol: string };
 // Todas las rutas exigen sesión (JwtAuthGuard global). Crear y pesar exigen rol.
 @ApiTags('recepciones')
 @ApiBearerAuth()
+@Auditar('recepcion')
 @Controller('recepciones')
 export class RecepcionesController {
   constructor(private readonly recepciones: RecepcionesService) {}
