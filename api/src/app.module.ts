@@ -9,9 +9,20 @@ import { ProductoresModule } from './catalogos/productores/productores.module';
 import { HealthController } from './health.controller';
 import { FincasModule } from './catalogos/fincas/fincas.module';
 import { CentrosModule } from './catalogos/centros/centros.module';
+import { TokensModule } from './tokens/tokens.module';
+import { RecepcionesModule } from './recepciones/recepciones.module';
 
 @Module({
-  imports: [PrismaModule, JwtModule.register({ global: true }), AuthModule, ProductoresModule, FincasModule, CentrosModule],
+  imports: [
+    PrismaModule,
+    JwtModule.register({ global: true }),
+    AuthModule,
+    ProductoresModule,
+    FincasModule,
+    CentrosModule,
+    TokensModule,
+    RecepcionesModule,
+  ],
   controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },

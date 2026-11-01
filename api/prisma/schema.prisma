@@ -126,6 +126,7 @@ model Usuario {
   tokensCreados Token[]         @relation("TokenCreador")
   auditorias    Auditoria[]     @relation("AuditoriaUsuario")
   refreshTokens RefreshToken[]
+  pesajes       RecepcionPesaje[] @relation("PesajeRegistrador")
 
   // Relaciones inversas del dominio (Integrante 2)
   lotesCreados           Lote[]                 @relation("LoteCreador")
@@ -300,6 +301,9 @@ model Recepcion {
   finca         Finca     @relation(fields: [fincaId], references: [id])
   registradoPor Usuario   @relation("RegistradoPor", fields: [registradoPorId], references: [id])
 
+  // Histórico de pesajes (nunca se sobrescribe un peso: se agrega uno nuevo)
+  pesajes RecepcionPesaje[]
+
   // Relaciones inversas del dominio (Integrante 2)
   lotes        LoteOrigenRecepcion[]
   inspecciones InspeccionCalidad[]
@@ -308,6 +312,24 @@ model Recepcion {
   @@index([productorId])
   @@index([centroId])
   @@map("recepcion")
+}
+
+// Cada pesaje de una recepción queda registrado. Recepcion.peso* guarda el vigente.
+model RecepcionPesaje {
+  id              String   @id @default(uuid())
+  recepcionId     String   @map("recepcion_id")
+  pesoBrutoKg     Decimal  @map("peso_bruto_kg") @db.Decimal(12, 2)
+  taraKg          Decimal  @default(0) @map("tara_kg") @db.Decimal(12, 2)
+  pesoNetoKg      Decimal  @map("peso_neto_kg") @db.Decimal(12, 2)
+  motivo          String?
+  registradoPorId String   @map("registrado_por_id")
+  creadoEn        DateTime @default(now()) @map("creado_en")
+
+  recepcion     Recepcion @relation(fields: [recepcionId], references: [id])
+  registradoPor Usuario   @relation("PesajeRegistrador", fields: [registradoPorId], references: [id])
+
+  @@index([recepcionId, creadoEn])
+  @@map("recepcion_pesaje")
 }
 
 // ---------------------------------------------------------------------------
