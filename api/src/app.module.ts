@@ -13,6 +13,9 @@ import { OrganizacionesModule } from './catalogos/organizaciones/organizaciones.
 import { CompradoresModule } from './catalogos/compradores/compradores.module';
 import { GradosCalidadModule } from './catalogos/grados-calidad/grados-calidad.module';
 import { LotesModule } from './lotes/lotes.module';
+import { TokensModule } from './tokens/tokens.module';
+import { RecepcionesModule } from './recepciones/recepciones.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { LotesModule } from './lotes/lotes.module';
     CompradoresModule,
     GradosCalidadModule,
     LotesModule,
+    TokensModule,
+    RecepcionesModule,
+    AuditoriaModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -1,10 +1,16 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  // La API corre detrás de Caddy: sin esto, req.ip sería siempre la IP del proxy
+  // (el límite de intentos de login y la auditoría verían a todos como una sola IP).
+  app.set('trust proxy', 1);
 
   app.setGlobalPrefix('api/v1');
 
@@ -15,6 +21,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // Todos los errores salen como { statusCode, mensaje, errores? }
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enableCors({
     origin: (process.env.CORS_ORIGINS ?? '').split(',').filter(Boolean),
