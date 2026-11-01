@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CompradoresService } from './compradores.service';
 import { ActualizarCompradorDto } from './dto/actualizar-comprador.dto';
@@ -10,6 +11,7 @@ import { ListarCompradoresDto } from './dto/listar-compradores.dto';
 // Las que modifican datos además exigen rol (@Roles + RolesGuard global).
 @ApiTags('compradores')
 @ApiBearerAuth()
+@Auditar('comprador')
 @Controller('compradores')
 export class CompradoresController {
   constructor(private readonly compradores: CompradoresService) {}

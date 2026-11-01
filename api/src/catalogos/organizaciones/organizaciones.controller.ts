@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActualizarOrganizacionDto } from './dto/actualizar-organizacion.dto';
 import { CrearOrganizacionDto } from './dto/crear-organizacion.dto';
@@ -10,6 +11,7 @@ import { OrganizacionesService } from './organizaciones.service';
 // Las que modifican datos además exigen rol (@Roles + RolesGuard global).
 @ApiTags('organizaciones')
 @ApiBearerAuth()
+@Auditar('organizacion')
 @Controller('organizaciones')
 export class OrganizacionesController {
   constructor(private readonly organizaciones: OrganizacionesService) {}

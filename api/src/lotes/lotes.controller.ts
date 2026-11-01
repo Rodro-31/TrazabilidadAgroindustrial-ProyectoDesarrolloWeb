@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../auditoria/auditar.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 import { AnularLoteDto } from './dto/anular-lote.dto';
@@ -13,8 +14,11 @@ type Usuario = { sub: string; rol: string };
 
 // No hay PATCH ni DELETE: un lote no se edita a mano. Cambia solo por operaciones
 // (traslados, procesos, ventas) o se anula con motivo, y todo queda en el historial.
+// @Auditar('lote'): nombre del modelo de Prisma, para que la auditoría guarde el estado
+// del lote ANTES de cada operación (la ruta "lotes" no coincide con el modelo "lote").
 @ApiTags('lotes')
 @ApiBearerAuth()
+@Auditar('lote')
 @Controller('lotes')
 export class LotesController {
   constructor(private readonly lotes: LotesService) {}
@@ -38,10 +42,18 @@ export class LotesController {
     return this.lotes.obtener(id);
   }
 
+  // Responde el lote y su QR ({ valor, url }) para imprimir la etiqueta.
   @Roles('ADMIN', 'SUPERVISOR', 'BASCULA')
   @Post()
   crear(@Body() dto: CrearLoteDto, @UsuarioActual() usuario: Usuario) {
     return this.lotes.crear(dto, usuario.sub);
+  }
+
+  // POST /api/v1/lotes/:id/qr  (reimprimir etiqueta: revoca el QR anterior)
+  @Roles('ADMIN', 'SUPERVISOR', 'BASCULA')
+  @Post(':id/qr')
+  regenerarQr(@Param('id', ParseUUIDPipe) id: string, @UsuarioActual() usuario: Usuario) {
+    return this.lotes.regenerarQr(id, usuario.sub);
   }
 
   // POST porque es una acción con efectos (no un simple cambio de campos);

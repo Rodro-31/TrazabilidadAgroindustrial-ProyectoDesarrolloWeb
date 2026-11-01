@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActualizarGradoCalidadDto } from './dto/actualizar-grado-calidad.dto';
 import { CrearGradoCalidadDto } from './dto/crear-grado-calidad.dto';
@@ -10,6 +11,7 @@ import { GradosCalidadService } from './grados-calidad.service';
 // Los grados los define el área de calidad: CALIDAD puede crearlos y editarlos.
 @ApiTags('grados-calidad')
 @ApiBearerAuth()
+@Auditar('gradoCalidad')
 @Controller('grados-calidad')
 export class GradosCalidadController {
   constructor(private readonly grados: GradosCalidadService) {}

@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActualizarFincaDto } from './dto/actualizar-finca.dto';
 import { CrearFincaDto } from './dto/crear-finca.dto';
@@ -20,6 +21,7 @@ import { FincasService } from './fincas.service';
 // Las que modifican datos además exigen rol (@Roles + RolesGuard global).
 @ApiTags('fincas')
 @ApiBearerAuth()
+@Auditar('finca')
 @Controller('fincas')
 export class FincasController {
   constructor(private readonly fincas: FincasService) {}

@@ -7,6 +7,8 @@ import {
 import { EstadoLote, Prisma } from '@prisma/client';
 import { Paginado, paginar } from '../common/paginacion.dto';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { QrEmitido } from '../recepciones/recepciones.service';
+import { TokensService } from '../tokens/tokens.service';
 import { CrearLoteDto } from './dto/crear-lote.dto';
 import { ListarLotesDto } from './dto/listar-lotes.dto';
 import { RecepcionesDisponiblesDto } from './dto/recepciones-disponibles.dto';
@@ -40,7 +42,10 @@ const ORIGEN_VIGENTE = { lote: { estado: { not: EstadoLote.ANULADO } } } satisfi
 
 @Injectable()
 export class LotesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tokens: TokensService,
+  ) {}
 
   async listar(filtros: ListarLotesDto): Promise<Paginado<LoteLista>> {
     const where: Prisma.LoteWhereInput = {
@@ -147,7 +152,7 @@ export class LotesService {
     }
 
     try {
-      const loteId = await this.prisma.$transaction(
+      const { loteId, qr } = await this.prisma.$transaction(
         async (tx) => {
           // 1. Bloquear las recepciones (SELECT ... FOR UPDATE): si otro usuario intenta
           //    usarlas al mismo tiempo, espera a que esta transacción termine. Así nadie
@@ -263,15 +268,22 @@ export class LotesService {
             });
           }
 
-          // TODO(QR): cuando exista el TokensService de Victor, crear aquí el token
-          // QR_LOTE (entidadTipo 'LOTE', entidadId lote.id, sin expiración).
+          // 7. QR del lote (TokensService de Victor), dentro de la misma transacción.
+          //    El QR solo lleva un valor aleatorio: ningún dato del lote ni del productor.
+          //    En la base se guarda solo su hash, por eso el valor se devuelve ahora
+          //    (para imprimir la etiqueta) y no se puede volver a consultar.
+          const token = await this.tokens.crear(
+            { proposito: 'QR_LOTE', entidadTipo: 'lote', entidadId: lote.id, creadoPorId: usuarioId },
+            tx,
+          );
+          const qr: QrEmitido = { valor: token.valor, url: this.tokens.urlQr(token.valor) };
 
-          return lote.id;
+          return { loteId: lote.id, qr };
         },
         { timeout: 15_000 },
       );
 
-      return this.obtener(loteId);
+      return { ...(await this.obtener(loteId)), qr };
     } catch (error) {
       this.traducirError(error);
     }
@@ -318,9 +330,32 @@ export class LotesService {
       }
 
       await this.cambiarEstado(tx, id, EstadoLote.ANULADO, usuarioId, motivo);
+
+      // Un lote anulado no debe poder identificarse con su etiqueta: se revoca su QR.
+      await this.tokens.revocarPorEntidad('lote', id, 'QR_LOTE', tx);
     });
 
     return this.obtener(id);
+  }
+
+  // Para reimprimir la etiqueta: el valor del QR solo existe al crearlo (en la base
+  // queda su hash), así que se revoca el anterior y se emite uno nuevo. Mismo
+  // criterio que el comprobante de recepciones.
+  async regenerarQr(id: string, usuarioId: string): Promise<QrEmitido> {
+    const lote = await this.prisma.lote.findUnique({ where: { id }, select: { estado: true } });
+    if (!lote) throw new NotFoundException('Lote no encontrado');
+    if (lote.estado === EstadoLote.ANULADO) {
+      throw new ConflictException('Un lote anulado no tiene etiqueta');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await this.tokens.revocarPorEntidad('lote', id, 'QR_LOTE', tx);
+      const token = await this.tokens.crear(
+        { proposito: 'QR_LOTE', entidadTipo: 'lote', entidadId: id, creadoPorId: usuarioId },
+        tx,
+      );
+      return { valor: token.valor, url: this.tokens.urlQr(token.valor) };
+    });
   }
 
   // Cambia el estado validando la máquina de estados y deja el registro en el historial.
