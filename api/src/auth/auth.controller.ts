@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Headers, HttpCode, Ip, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
@@ -15,6 +15,7 @@ export class AuthController {
   @Public()
   @UseGuards(ThrottlerGuard)
   @HttpCode(200)
+  @ApiHeader({ name: 'user-agent', required: false })
   @Post('login')
   login(
     @Body() dto: LoginDto,
