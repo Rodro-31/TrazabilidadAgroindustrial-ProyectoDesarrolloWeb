@@ -1,0 +1,10 @@
+# Plan de Pruebas Funcionales y Reglas de Negocio
+
+El presente documento detalla la ejecución de las pruebas funcionales aplicadas a la Aplicación Web Progresiva (PWA) y al sistema backend de trazabilidad en el entorno de producción (`campo.x-dev.store`). A continuación, se contrastan los resultados esperados frente a los obtenidos, adjuntando la evidencia correspondiente para cada caso de uso.
+
+| ID | Regla / Requisito | Pasos | Resultado Esperado | Resultado Obtenido | Evidencia |
+|---|---|---|---|---|---|
+| **PR-01** | Regla 6: Toda operación sensible auditada | 1. Ejecutar las pruebas unitarias del backend.<br>2. Evaluar la respuesta de `AuditoriaInterceptor` al procesar `POST /api/v1/recepciones`. | El interceptor guarda usuario, acción, antes/después, IP y fecha. | **FALLO:** El interceptor devuelve error `base caída` y no registra la acción. | `pruebas unitarias_2.png` |
+| **PR-02** | Regla 4: Histórico de pesajes no se sobrescribe | 1. Iniciar sesión en la PWA con rol ADMIN.<br>2. Abrir el detalle de una recepción existente.<br>3. Ingresar nuevo peso y clic en "Registrar nuevo pesaje". | Se agrega el pesaje nuevo y el anterior permanece en el "Historial de pesajes". | **ÉXITO:** El historial muestra el pesaje original (Neto 98.00 kg) de forma secuencial sin sobrescribirse. | `pwa-04-detalle_2.png` |
+| **PR-03** | PWA: Sincronización offline | 1. Desactivar la conexión a red en DevTools (modo Offline).<br>2. Llenar y guardar una nueva recepción.<br>3. Revisar "Envíos y comprobantes". | La recepción se retiene localmente (IndexedDB) indicando estado pendiente. | **ÉXITO:** La PWA muestra la etiqueta "Sin conexión" y aloja el registro (P-0005 Domingo Tiul Coc) en "Por enviar". | `pwa-05-offline_2.png` |
+| **PR-04** | Tokens: QR de recepción sin datos sensibles | 1. En la PWA, ir a "Envíos y comprobantes".<br>2. Hacer clic en "Ver QR" en un comprobante enviado. | Se muestra un código QR basado en un hash seguro, sin exponer datos en texto plano. | **ÉXITO:** El QR se despliega correctamente listo para lectura o impresión. | `pwa-03-comprobante-qr_2.png` |
