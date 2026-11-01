@@ -12,6 +12,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActualizarProductorDto } from './dto/actualizar-productor.dto';
 import { CrearProductorDto } from './dto/crear-productor.dto';
@@ -22,6 +23,7 @@ import { ProductoresService } from './productores.service';
 // Las que modifican datos además exigen rol (@Roles + RolesGuard global).
 @ApiTags('productores')
 @ApiBearerAuth()
+@Auditar('productor')
 @Controller('productores')
 export class ProductoresController {
   constructor(private readonly productores: ProductoresService) {}

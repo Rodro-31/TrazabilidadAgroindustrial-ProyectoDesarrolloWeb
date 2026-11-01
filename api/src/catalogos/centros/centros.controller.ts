@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { ActualizarCentroDto } from './dto/actualizar-centro.dto';
 import { CrearCentroDto } from './dto/crear-centro.dto';
@@ -20,6 +21,7 @@ import { CentrosService } from './centros.service';
 // Las que modifican datos además exigen rol (@Roles + RolesGuard global).
 @ApiTags('centros')
 @ApiBearerAuth()
+@Auditar('centro')
 @Controller('centros')
 export class CentrosController {
   constructor(private readonly centros: CentrosService) {}

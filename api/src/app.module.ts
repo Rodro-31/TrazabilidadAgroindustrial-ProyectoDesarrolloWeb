@@ -9,6 +9,10 @@ import { ProductoresModule } from './catalogos/productores/productores.module';
 import { HealthController } from './health.controller';
 import { FincasModule } from './catalogos/fincas/fincas.module';
 import { CentrosModule } from './catalogos/centros/centros.module';
+import { OrganizacionesModule } from './catalogos/organizaciones/organizaciones.module';
+import { CompradoresModule } from './catalogos/compradores/compradores.module';
+import { GradosCalidadModule } from './catalogos/grados-calidad/grados-calidad.module';
+import { LotesModule } from './lotes/lotes.module';
 import { TokensModule } from './tokens/tokens.module';
 import { RecepcionesModule } from './recepciones/recepciones.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
@@ -21,6 +25,10 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
     ProductoresModule,
     FincasModule,
     CentrosModule,
+    OrganizacionesModule,
+    CompradoresModule,
+    GradosCalidadModule,
+    LotesModule,
     TokensModule,
     RecepcionesModule,
     AuditoriaModule,
