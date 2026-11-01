@@ -1,10 +1,43 @@
-// Esqueleto de la aplicación web de administración.
-// Las pantallas (usuarios, auditoría, catálogos, lotes) se agregan por módulo.
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider, useAuth } from './auth';
+import Layout from './componentes/Layout';
+import Inicio from './pantallas/Inicio';
+import Login from './pantallas/Login';
+import { MODULOS } from './modulos';
+
+function Rutas() {
+  const { sesion } = useAuth();
+  if (!sesion) {
+    // Sin sesión todo lleva al login (y al entrar se vuelve a la pantalla de inicio).
+    return (
+      <Routes>
+        <Route path="*" element={<Login />} />
+      </Routes>
+    );
+  }
+  return (
+    <Routes>
+      <Route element={<Layout />}>
+        <Route index element={<Inicio />} />
+        {MODULOS.map((m) => (
+          <Route
+            key={m.ruta}
+            path={m.ruta}
+            element={m.roles.includes(sesion.rol) ? m.pantalla : <Navigate to="/" replace />}
+          />
+        ))}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  );
+}
+
 export default function App() {
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', padding: '1.5rem' }}>
-      <h1>Trazabilidad agroindustrial</h1>
-      <p>Administración: en construcción.</p>
-    </main>
+    <BrowserRouter>
+      <AuthProvider>
+        <Rutas />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
