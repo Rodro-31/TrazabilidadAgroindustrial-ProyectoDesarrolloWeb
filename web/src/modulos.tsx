@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Auditoria from './pantallas/Auditoria';
+import Calidad from './pantallas/Calidad';
 import Catalogos from './pantallas/Catalogos';
 import Lotes from './pantallas/Lotes';
 import Liquidaciones from './pantallas/Liquidaciones';
@@ -26,6 +27,14 @@ export const MODULOS: Modulo[] = [
     descripcion: 'Quién hizo qué, cuándo y desde dónde',
     roles: ['ADMIN', 'AUDITOR'],
     pantalla: <Auditoria />,
+  },
+  {
+    ruta: 'calidad',
+    titulo: 'Calidad',
+    descripcion: 'Inspecciones de recepciones y lotes: resultado, grado, humedad y defectos',
+    // ADMIN, SUPERVISOR y CALIDAD registran; BASCULA y AUDITOR solo consultan.
+    roles: ['ADMIN', 'SUPERVISOR', 'CALIDAD', 'BASCULA', 'AUDITOR'],
+    pantalla: <Calidad />,
   },
   {
     ruta: 'catalogos',
