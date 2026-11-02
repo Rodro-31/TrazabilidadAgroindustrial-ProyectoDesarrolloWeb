@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 import { useSearchParams } from 'react-router-dom';
 import { api, descargarBlob, listarTodo } from '../api';
+import { useAuth } from '../auth';
 import Tabla, { type Columna } from '../componentes/Tabla';
 import { fecha, kg, mensajeError, PRODUCTO } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
@@ -33,6 +35,8 @@ interface RecepcionDetalle extends RecepcionFila {
   observaciones: string | null;
   pesajes: Pesaje[];
 }
+
+const ROLES_QR = ['ADMIN', 'SUPERVISOR', 'BASCULA'];
 
 // Una fecha "2026-11-01" del filtro se convierte al inicio o al final de ese día (hora local),
 // porque la API compara contra instantes exactos.
@@ -128,6 +132,25 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
   const [error, setError] = useState('');
   const [fotos, setFotos] = useState<{ id: string; url: string }[]>([]);
   const [errorFotos, setErrorFotos] = useState('');
+  const { sesion } = useAuth();
+  const [qr, setQr] = useState<{ valor: string; url: string | null } | null>(null);
+  const [aviso, setAviso] = useState('');
+  const [ocupado, setOcupado] = useState(false);
+
+  async function nuevoQr() {
+    if (!confirm('Se emitirá un QR nuevo y el anterior dejará de servir. ¿Continuar?')) return;
+    setOcupado(true);
+    setAviso('');
+    try {
+      const { data } = await api.post<{ valor: string; url: string | null }>(`/recepciones/${id}/qr`);
+      setQr(data);
+      setAviso('QR nuevo emitido. El anterior ya no es válido.');
+    } catch (e) {
+      setAviso(mensajeError(e));
+    } finally {
+      setOcupado(false);
+    }
+  }
 
   useEffect(() => {
     let vivo = true;
@@ -157,8 +180,15 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
 
   return (
     <div>
-      <div className="barra"><button onClick={alVolver}>← Volver a la lista</button></div>
+      <div className="barra">
+        <button onClick={alVolver}>← Volver a la lista</button>
+        {ROLES_QR.includes(sesion?.rol ?? '') && (
+          <button onClick={nuevoQr} disabled={ocupado}>Reimprimir comprobante (QR nuevo)</button>
+        )}
+      </div>
       <h2>{r.productor.codigo} · {r.productor.nombre}</h2>
+      {aviso && <p className="aviso" role="status">{aviso}</p>}
+      {qr && <ComprobanteQr qr={qr} resumen={`${r.productor.codigo} · ${r.productor.nombre}`} detalle={`${PRODUCTO[r.estadoProducto] ?? r.estadoProducto} · neto ${kg(r.pesoNetoKg)}`} />}
 
       <dl className="datos">
         <div><dt>Capturada</dt><dd>{fecha(r.capturadoEn)}</dd></div>
@@ -205,6 +235,35 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
           </table>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Comprobante de la recepción: el QR lleva solo la URL con un valor aleatorio (sin datos del productor).
+// El valor existe únicamente al emitirlo: en la base queda su hash.
+function ComprobanteQr({ qr, resumen, detalle }: { qr: { valor: string; url: string | null }; resumen: string; detalle: string }) {
+  const [imagen, setImagen] = useState('');
+  useEffect(() => {
+    let vivo = true;
+    QRCode.toDataURL(qr.url ?? qr.valor, { margin: 1, width: 280 }).then((d) => vivo && setImagen(d));
+    return () => {
+      vivo = false;
+    };
+  }, [qr]);
+
+  return (
+    <div className="panel">
+      <div className="etiqueta imprimible">
+        {imagen ? <img src={imagen} alt="Código QR de la recepción" width={180} height={180} /> : <p>Generando QR…</p>}
+        <div>
+          <strong className="etiqueta-codigo">{resumen}</strong>
+          <span>{detalle}</span>
+        </div>
+      </div>
+      <div className="acciones">
+        <button className="primario" onClick={() => window.print()} disabled={!imagen}>Imprimir comprobante</button>
+      </div>
+      <p className="nota">Muéstralo en pantalla para escanearlo con la PWA, o imprímelo. Por seguridad no se vuelve a mostrar: si se pierde, emite uno nuevo.</p>
     </div>
   );
 }
