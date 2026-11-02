@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { listarTodo } from '../api';
 import { useAuth } from '../auth';
+import Exportar from '../componentes/Exportar';
 import Tabla, { type Columna } from '../componentes/Tabla';
 import { fecha, kg } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
@@ -92,7 +93,24 @@ function ListaProcesos({ puedeCrear, alAbrir, alNuevo }: { puedeCrear: boolean; 
             </select>
           </label>
         </form>
-        {puedeCrear && <button className="primario" onClick={alNuevo}>Registrar proceso</button>}
+        <div className="acciones">
+          <Exportar<ProcesoFila>
+            ruta="/procesos"
+            filtros={f}
+            nombre="procesos"
+            columnas={[
+              { titulo: 'Código', valor: (p) => p.codigo },
+              { titulo: 'Tipo', valor: (p) => TIPO_PROCESO[p.tipo] ?? p.tipo },
+              { titulo: 'Entraron', valor: (p) => codigos(p.relaciones.map((r) => r.padre)) },
+              { titulo: 'Salieron', valor: (p) => codigos(p.relaciones.map((r) => r.hijo)) },
+              { titulo: 'Merma (kg)', valor: (p) => p.mermaKg },
+              { titulo: 'Centro', valor: (p) => p.centro.codigo },
+              { titulo: 'Fecha', valor: (p) => fecha(p.realizadoEn) },
+              { titulo: 'Realizado por', valor: (p) => p.realizadoPor.nombre },
+            ]}
+          />
+          {puedeCrear && <button className="primario" onClick={alNuevo}>Registrar proceso</button>}
+        </div>
       </div>
       <Tabla
         columnas={columnas}

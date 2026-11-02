@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api, listarTodo } from '../api';
 import { useAuth } from '../auth';
+import Exportar, { BotonPdf } from '../componentes/Exportar';
 import Tabla, { type Columna } from '../componentes/Tabla';
 import { fecha, kg, mensajeError, PRODUCTO, quetzales, soloFecha } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
@@ -129,7 +130,29 @@ function ListaLiquidaciones({ puedeCrear, alAbrir, alNuevo }: { puedeCrear: bool
             </select>
           </label>
         </form>
-        {puedeCrear && <button className="primario" onClick={alNuevo}>Nueva liquidación</button>}
+        <div className="acciones">
+          <Exportar<Liquidacion>
+            ruta="/liquidaciones"
+            filtros={f}
+            nombre="liquidaciones"
+            columnas={[
+              { titulo: 'Código', valor: (l) => l.codigo },
+              { titulo: 'Estado', valor: (l) => ESTADO[l.estado]?.texto ?? l.estado },
+              { titulo: 'Código productor', valor: (l) => l.productor.codigo },
+              { titulo: 'Productor', valor: (l) => l.productor.nombre },
+              { titulo: 'Desde', valor: (l) => dia(l.periodoInicio) },
+              { titulo: 'Hasta', valor: (l) => dia(l.periodoFin) },
+              { titulo: 'Recepciones', valor: (l) => l._count.detalles },
+              { titulo: 'Total kg', valor: (l) => l.totalKg },
+              { titulo: 'Total (GTQ)', valor: (l) => l.totalMonto },
+              { titulo: 'Creada', valor: (l) => fecha(l.creadoEn) },
+              { titulo: 'Creada por', valor: (l) => l.creadoPor.nombre },
+              { titulo: 'Aprobada por', valor: (l) => l.aprobadoPor?.nombre },
+              { titulo: 'Pagada', valor: (l) => (l.pagadoEn ? fecha(l.pagadoEn) : '') },
+            ]}
+          />
+          {puedeCrear && <button className="primario" onClick={alNuevo}>Nueva liquidación</button>}
+        </div>
       </div>
       <Tabla
         columnas={columnas}
@@ -298,10 +321,12 @@ function DetalleLiquidacion({ id, alVolver }: { id: string; alVolver: () => void
   const gestiona = ROLES_CREAR.includes(rol);
 
   return (
-    <div>
-      <div className="barra">
+    // "documento": al imprimir (o guardar como PDF) sale solo esto, sin menú ni botones.
+    <div className="documento">
+      <div className="barra no-imprimir">
         <button onClick={alVolver}>← Volver a la lista</button>
         <div className="acciones">
+          <BotonPdf texto={l.estado === 'PAGADA' ? 'Recibo PDF' : 'Imprimir / PDF'} />
           {l.estado === 'BORRADOR' && gestiona && (
             <button className="primario" disabled={ocupado} onClick={() => accion('aprobar', 'Liquidación aprobada. Falta registrar el pago.')}>Aprobar</button>
           )}
@@ -314,10 +339,11 @@ function DetalleLiquidacion({ id, alVolver }: { id: string; alVolver: () => void
         </div>
       </div>
 
+      <p className="solo-impresion">Plataforma de Trazabilidad Agroindustrial · {l.estado === 'PAGADA' ? 'Recibo de pago' : 'Resumen de liquidación'} · generado {fecha(new Date().toISOString())}</p>
       <h2>Liquidación {l.codigo} <Insignia estado={l.estado} /></h2>
       <p className="nota">{l.productor.codigo} · {l.productor.nombre} · período {dia(l.periodoInicio)} – {dia(l.periodoFin)}</p>
-      {aviso && <p className="aviso" role="status">{aviso}</p>}
-      {l.estado === 'BORRADOR' && <p className="nota">La aprueba una persona distinta de quien la creó ({l.creadoPor.nombre}).</p>}
+      {aviso && <p className="aviso no-imprimir" role="status">{aviso}</p>}
+      {l.estado === 'BORRADOR' && <p className="nota no-imprimir">La aprueba una persona distinta de quien la creó ({l.creadoPor.nombre}).</p>}
 
       <ul className="lista">
         <li>Creada {fecha(l.creadoEn)} por {l.creadoPor.nombre}</li>
@@ -349,6 +375,10 @@ function DetalleLiquidacion({ id, alVolver }: { id: string; alVolver: () => void
         <p className="nota">Anulada: sus recepciones quedaron libres. Se conservan los totales que se habían calculado.</p>
       )}
       <p className="total">Total: <strong>{kg(l.totalKg)}</strong> · <strong>{quetzales(l.totalMonto)}</strong></p>
+      <div className="firmas solo-impresion">
+        <span>Firma del productor</span>
+        <span>Entregó (centro de acopio)</span>
+      </div>
     </div>
   );
 }
