@@ -174,3 +174,8 @@ input.invalido { border-color: var(--error); }
 .salida { align-items: end; }
 .salida button { margin-bottom: 12px; }
 .separado { margin-top: 16px; }
+
+/* --- Kárdex del lote (Integrante 2) --- */
+.entrada-kg { color: var(--verde); font-weight: 600; white-space: nowrap; }
+.salida-kg { color: var(--error); font-weight: 600; white-space: nowrap; }
+.saldo-kg { white-space: nowrap; }
