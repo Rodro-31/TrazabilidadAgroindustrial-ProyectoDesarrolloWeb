@@ -20,6 +20,8 @@ import { ArchivosModule } from './archivos/archivos.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ProcesosModule } from './procesos/procesos.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { TrasladosModule } from './traslados/traslados.module';
+import { LiquidacionesModule } from './liquidaciones/liquidaciones.module';
 import { CalidadModule } from './calidad/calidad.module';
 import { TareasModule } from './tareas/tareas.module';
 
@@ -44,6 +46,8 @@ import { TareasModule } from './tareas/tareas.module';
     TareasModule,
     ProcesosModule,
     DashboardModule,
+    TrasladosModule,
+    LiquidacionesModule,
   ],
   controllers: [HealthController],
   providers: [

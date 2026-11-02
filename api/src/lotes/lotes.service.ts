@@ -366,16 +366,21 @@ export class LotesService {
     // La referencia es un id suelto (puede ser de una recepción o de un proceso):
     // se traduce a algo legible con una consulta por tipo, no una por movimiento.
     const ids = (tipo: string) => movimientos.filter((m) => m.referenciaTipo === tipo).map((m) => m.referenciaId!);
-    const [recepciones, procesos] = await Promise.all([
+    const [recepciones, procesos, traslados] = await Promise.all([
       this.prisma.recepcion.findMany({
         where: { id: { in: ids('RECEPCION') } },
         select: { id: true, productor: { select: { nombre: true } } },
       }),
       this.prisma.proceso.findMany({ where: { id: { in: ids('PROCESO') } }, select: { id: true, codigo: true, tipo: true } }),
+      this.prisma.traslado.findMany({
+        where: { id: { in: ids('TRASLADO') } },
+        select: { id: true, codigo: true, origen: { select: { codigo: true } }, destino: { select: { codigo: true } } },
+      }),
     ]);
     const nombres = new Map<string, string>([
       ...recepciones.map((r) => [r.id, `Recepción de ${r.productor.nombre}`] as [string, string]),
       ...procesos.map((p) => [p.id, `Proceso ${p.codigo} (${p.tipo})`] as [string, string]),
+      ...traslados.map((t) => [t.id, `Traslado ${t.codigo} (${t.origen.codigo} → ${t.destino.codigo})`] as [string, string]),
     ]);
     const legible = (m: (typeof movimientos)[number]) => {
       if (m.referenciaTipo === 'ANULACION') return 'Anulación del lote';

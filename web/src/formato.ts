@@ -6,7 +6,13 @@ export const kg = (valor: string | number | null | undefined) =>
     ? '—'
     : `${Number(valor).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kg`;
 
-export const fecha = (iso: string | null | undefined) =>
+// Montos en quetzales (también llegan como texto).
+export const quetzales = (valor: string | number | null | undefined) =>
+  valor == null || valor === ''
+    ? '—'
+    : `Q ${Number(valor).toLocaleString('es-GT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+export const fecha =(iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' }) : '—';
 
 export const soloFecha = (iso: string | null | undefined) =>
@@ -27,7 +33,8 @@ export const ESTADO_LOTE: Record<string, string> = {
 export function mensajeError(e: unknown): string {
   const err = e as { status?: number; message?: string; errores?: string[] };
   if (err?.status === 0) return 'Sin conexión con el servidor.';
-  if (err?.status === 403) return 'No tienes permiso para esta operación.';
+  // 403: la API explica el motivo cuando es una regla de negocio (p. ej. quien crea no aprueba).
+  if (err?.status === 403) return err.message ?? 'No tienes permiso para esta operación.';
   const base = err?.message ?? 'Ocurrió un error.';
   return err?.errores?.length ? `${base}: ${err.errores.join('; ')}` : base;
 }
