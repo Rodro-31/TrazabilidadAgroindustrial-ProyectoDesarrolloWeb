@@ -170,3 +170,12 @@ export async function listarTodo<T>(ruta: string): Promise<T[]> {
   }
   return todos;
 }
+
+// Descarga un archivo protegido (p. ej. una foto): exige el token, por eso no sirve un <img src>.
+export async function descargarBlob(ruta: string, reintentar = true): Promise<Blob> {
+  const s = leerSesion();
+  const r = await crudo(ruta, { headers: s ? { Authorization: `Bearer ${s.accessToken}` } : {} });
+  if (r.status === 401 && reintentar && s && (await refrescar())) return descargarBlob(ruta, false);
+  if (!r.ok) throw new ApiError(r.status, `Error ${r.status}`);
+  return r.blob();
+}

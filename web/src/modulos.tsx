@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Auditoria from './pantallas/Auditoria';
 import Catalogos from './pantallas/Catalogos';
 import Lotes from './pantallas/Lotes';
+import Recepciones from './pantallas/Recepciones';
 import Usuarios from './pantallas/Usuarios';
 
 // Cada módulo del menú. Para agregar una pantalla: crear el componente en
@@ -37,6 +38,14 @@ export const MODULOS: Modulo[] = [
     descripcion: 'Lotes, origen, estados y QR',
     roles: ['ADMIN', 'SUPERVISOR', 'BASCULA', 'CALIDAD', 'AUDITOR'],
     pantalla: <Lotes />,
+  },
+  {
+    ruta: 'recepciones',
+    titulo: 'Recepciones',
+    descripcion: 'Recepciones de producto con sus pesajes y fotos',
+    // Solo consulta: capturar y volver a pesar se hace en la PWA de campo.
+    roles: ['ADMIN', 'SUPERVISOR', 'CALIDAD', 'BASCULA', 'AUDITOR'],
+    pantalla: <Recepciones />,
   },
   {
     ruta: 'usuarios',
