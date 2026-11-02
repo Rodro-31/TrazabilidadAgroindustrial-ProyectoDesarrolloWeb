@@ -11,6 +11,8 @@ import Login from './pantallas/Login';
 import LoteDetalle from './pantallas/Lote';
 import NuevaRecepcion from './pantallas/NuevaRecepcion';
 import ResolverQr from './pantallas/ResolverQr';
+import { NuevaInspeccion } from './pantallas/Inspeccion';
+import Tareas from './pantallas/Tareas';
 import { BuscarProductor, Productor } from './pantallas/Productores';
 
 export type Ruta =
@@ -22,7 +24,9 @@ export type Ruta =
   | { nombre: 'detalle'; id: string }
   | { nombre: 'lote'; id: string }
   | { nombre: 'productores' }
-  | { nombre: 'productor'; id: string };
+  | { nombre: 'productor'; id: string }
+  | { nombre: 'inspeccion'; tipo: 'recepcion' | 'lote'; id: string; resumen: string }
+  | { nombre: 'tareas' };
 
 const TITULOS: Record<Ruta['nombre'], string> = {
   inicio: 'Trazabilidad de campo',
@@ -34,6 +38,8 @@ const TITULOS: Record<Ruta['nombre'], string> = {
   lote: 'Lote',
   productores: 'Productores',
   productor: 'Productor',
+  inspeccion: 'Inspección de calidad',
+  tareas: 'Tareas pendientes',
 };
 
 // Si la PWA se abre desde un QR (https://campo.../q/<valor>), arranca en esa pantalla.
@@ -140,8 +146,16 @@ export default function App() {
         {ruta.nombre === 'historial' && <Historial ir={ir} />}
         {ruta.nombre === 'escanear' && <Escanear alLeer={(valor) => ir({ nombre: 'qr', valor }, true)} />}
         {ruta.nombre === 'qr' && <ResolverQr valor={ruta.valor} ir={ir} />}
-        {ruta.nombre === 'detalle' && <Detalle id={ruta.id} rol={sesion.rol} />}
-        {ruta.nombre === 'lote' && <LoteDetalle id={ruta.id} ir={ir} />}
+        {ruta.nombre === 'detalle' && <Detalle key={ruta.id} id={ruta.id} rol={sesion.rol} ir={ir} />}
+        {ruta.nombre === 'lote' && <LoteDetalle key={ruta.id} id={ruta.id} rol={sesion.rol} ir={ir} />}
+        {ruta.nombre === 'inspeccion' && (
+          <NuevaInspeccion
+            objetivo={{ tipo: ruta.tipo, id: ruta.id, resumen: ruta.resumen }}
+            catalogos={catalogos}
+            alGuardar={atras}
+          />
+        )}
+        {ruta.nombre === 'tareas' && <Tareas ir={ir} />}
         {ruta.nombre === 'productores' && <BuscarProductor catalogos={catalogos} ir={ir} />}
         {ruta.nombre === 'productor' && <Productor key={ruta.id} id={ruta.id} catalogos={catalogos} ir={ir} />}
       </main>

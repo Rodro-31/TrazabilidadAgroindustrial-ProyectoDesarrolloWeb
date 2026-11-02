@@ -3,7 +3,9 @@ import { api, ApiError, descargarBlob } from '../api';
 import { db } from '../db';
 import { sincronizar } from '../sync';
 import { comprimirImagen, fechaHora, kg, numero, tieneMaxDosDecimales, uuid } from '../util';
+import type { Ruta } from '../App';
 import Comprobante from './Comprobante';
+import { ListaInspecciones, PUEDE_INSPECCIONAR } from './Inspeccion';
 
 interface Pesaje {
   id: string;
@@ -36,7 +38,7 @@ const MAX_FOTOS = 5;
 
 interface FotoInfo { id: string }
 
-export default function Detalle({ id, rol }: { id: string; rol: string }) {
+export default function Detalle({ id, rol, ir }: { id: string; rol: string; ir: (r: Ruta) => void }) {
   const [r, setR] = useState<Recepcion | null>(null);
   const [error, setError] = useState('');
   const [qr, setQr] = useState<{ valor: string; url: string | null } | null>(null);
@@ -162,6 +164,16 @@ export default function Detalle({ id, rol }: { id: string; rol: string }) {
         </label>
       )}
       {msgFoto && <p role="status" className="aviso">{msgFoto}</p>}
+
+      <ListaInspecciones objetivo={{ tipo: 'recepcion', id: r.id }} />
+      {PUEDE_INSPECCIONAR.includes(rol) && (
+        <button
+          className="primario"
+          onClick={() => ir({ nombre: 'inspeccion', tipo: 'recepcion', id: r.id, resumen: `recepción ${r.productor.codigo} · ${r.productor.nombre}` })}
+        >
+          Inspeccionar calidad
+        </button>
+      )}
 
       {r.pesajes.length > 0 && (
         <>

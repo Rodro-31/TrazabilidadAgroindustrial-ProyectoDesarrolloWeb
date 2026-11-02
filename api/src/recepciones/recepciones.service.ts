@@ -7,6 +7,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { Paginado, paginar } from '../common/paginacion.dto';
 import { PrismaService } from '../common/prisma/prisma.service';
+import { TareasService } from '../tareas/tareas.service';
 import { TokensService } from '../tokens/tokens.service';
 import { CrearRecepcionDto } from './dto/crear-recepcion.dto';
 import { ListarRecepcionesDto } from './dto/listar-recepciones.dto';
@@ -58,6 +59,7 @@ export class RecepcionesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokens: TokensService,
+    private readonly tareas: TareasService,
   ) {}
 
   async listar(filtros: ListarRecepcionesDto): Promise<Paginado<RecepcionLista>> {
@@ -130,6 +132,17 @@ export class RecepcionesService {
             registradoPorId: usuarioId,
           },
         });
+        // Cada recepción nueva queda pendiente de inspección para el rol CALIDAD de su centro.
+        const productor = await tx.productor.findUnique({
+          where: { id: dto.productorId },
+          select: { codigo: true, nombre: true },
+        });
+        await this.tareas.crearInspeccionRecepcion(
+          tx,
+          dto.id,
+          dto.centroId,
+          `Inspeccionar recepción de ${productor?.codigo ?? ''} ${productor?.nombre ?? ''} (${neto.toFixed(2)} kg)`.replace(/\s+/g, ' '),
+        );
         const token = await this.tokens.crear(
           {
             proposito: 'QR_RECEPCION',

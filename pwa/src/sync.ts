@@ -6,6 +6,9 @@ const avisar = () => window.dispatchEvent(new Event(EVENTO_COLA));
 
 let enCurso = false;
 
+// Ruta de la API según el tipo de operación guardada en la cola.
+const RUTA: Record<string, string> = { recepcion: '/recepciones', inspeccion: '/calidad/inspecciones' };
+
 // Envía las operaciones guardadas, de la más antigua a la más nueva.
 // - Éxito (201 o 200 "ya existía"): se borra de la cola y se guarda su QR.
 // - Sin red / error del servidor: se queda pendiente y se detiene (se reintenta luego).
@@ -21,11 +24,11 @@ export async function sincronizar(): Promise<{ enviadas: number; conError: numbe
       avisar();
       try {
         const { data } = await api.post<{ id: string; qr?: { valor: string; url: string | null } | null }>(
-          '/recepciones',
+          RUTA[op.tipo] ?? '/recepciones',
           op.payload,
         );
         await db.transaction('rw', db.operaciones, db.comprobantes, async () => {
-          if (data.qr) {
+          if (op.tipo === 'recepcion' && data.qr) {
             await db.comprobantes.put({
               recepcionId: op.id,
               valor: data.qr.valor,

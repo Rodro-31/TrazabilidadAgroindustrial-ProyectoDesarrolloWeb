@@ -20,6 +20,8 @@ import { ArchivosModule } from './archivos/archivos.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ProcesosModule } from './procesos/procesos.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { CalidadModule } from './calidad/calidad.module';
+import { TareasModule } from './tareas/tareas.module';
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     AuditoriaModule,
     ArchivosModule,
     UsuariosModule,
+    CalidadModule,
+    TareasModule,
     ProcesosModule,
     DashboardModule,
   ],

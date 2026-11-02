@@ -89,6 +89,12 @@ fieldset { border: 1px solid var(--borde); border-radius: 10px; margin: 0 0 12px
 .item.tocable { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
 .item.tocable:active { background: var(--verde-claro); }
 
+.opciones-resultado { display: flex; gap: 8px; }
+.opciones-resultado legend { font-weight: 600; padding: 0 4px; }
+.opciones-resultado .opcion { flex: 1; border: 1px solid var(--borde); border-radius: 10px; padding: 0 12px; background: #fff; }
+.opciones-resultado .opcion.elegida { border-color: var(--verde); background: var(--verde-claro); font-weight: 600; }
+.detalle > button { width: 100%; margin: 12px 0; }
+
 @media print {
   .barra, button, .nota { display: none !important; }
   body { background: #fff; }

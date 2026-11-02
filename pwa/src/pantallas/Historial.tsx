@@ -42,7 +42,7 @@ export default function Historial({ ir }: { ir: (r: Ruta) => void }) {
                 <button onClick={() => reintentar(o.id)}>Reintentar</button>
                 <button
                   onClick={() => {
-                    if (confirm('¿Descartar esta recepción? No se enviará.')) void descartar(o.id);
+                    if (confirm('¿Descartar este envío? No se enviará.')) void descartar(o.id);
                   }}
                 >
                   Descartar
