@@ -17,6 +17,15 @@ import { puedeTransicionar } from './transiciones';
 const Decimal = Prisma.Decimal;
 type Decimal = Prisma.Decimal;
 
+// Una arista del grafo de lotes, como la devuelven las consultas WITH RECURSIVE.
+interface FilaGrafo {
+  padre_id: string;
+  hijo_id: string;
+  tipo: string;
+  cantidad_kg: Decimal;
+  nivel: number;
+}
+
 const CAMPOS_LISTA = {
   id: true,
   codigo: true,
@@ -45,7 +54,7 @@ export class LotesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokens: TokensService,
-  ) {}
+  ) { }
 
   async listar(filtros: ListarLotesDto): Promise<Paginado<LoteLista>> {
     const where: Prisma.LoteWhereInput = {
@@ -379,6 +388,137 @@ export class LotesService {
       data: { loteId, estadoAnterior: lote.estado, estadoNuevo: hacia, motivo, usuarioId },
     });
   }
+
+  // Trazabilidad del lote: hacia atrás (de dónde viene) y hacia adelante (en qué se convirtió).
+  async trazabilidad(id: string) {
+    // 1. Lote de partida
+    const lote = await this.prisma.lote.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        codigo: true,
+        estado: true,
+        estadoProducto: true,
+        pesoInicialKg: true,
+        centro: { select: { codigo: true, nombre: true } },
+      },
+    });
+    if (!lote) throw new NotFoundException('Lote no encontrado');
+
+    // 2. Hacia atrás: padres, abuelos, bisabuelos... (WITH RECURSIVE)
+    const ancestros = await this.prisma.$queryRaw<FilaGrafo[]>`
+      WITH RECURSIVE ancestros AS (
+        -- Punto de partida: los padres directos del lote
+        SELECT padre_id, hijo_id, tipo, cantidad_kg, 1 AS nivel
+        FROM lote_relacion
+        WHERE hijo_id = ${id}
+
+        UNION ALL
+
+        -- Paso que se repite: los padres de los padres ya encontrados
+        SELECT r.padre_id, r.hijo_id, r.tipo, r.cantidad_kg, a.nivel + 1
+        FROM lote_relacion r
+        JOIN ancestros a ON r.hijo_id = a.padre_id
+        WHERE a.nivel < 50 -- red de seguridad contra ciclos
+      )
+      SELECT * FROM ancestros
+    `;
+
+    // 3. Hacia adelante: hijos, nietos... (WITH RECURSIVE)
+    const descendientes = await this.prisma.$queryRaw<FilaGrafo[]>`
+      WITH RECURSIVE descendientes AS (
+        -- Punto de partida: los hijos directos del lote
+        SELECT padre_id, hijo_id, tipo, cantidad_kg, 1 AS nivel
+        FROM lote_relacion
+        WHERE padre_id = ${id}
+
+        UNION ALL
+
+        -- Paso que se repite: los hijos de los hijos ya encontrados
+        SELECT r.padre_id, r.hijo_id, r.tipo, r.cantidad_kg, d.nivel + 1
+        FROM lote_relacion r
+        JOIN descendientes d ON r.padre_id = d.hijo_id
+        WHERE d.nivel < 50 -- red de seguridad contra ciclos
+      )
+      SELECT * FROM descendientes
+    `;
+
+    // 4. (lo completamos juntos después)
+        // 4. Ids de todo el árbol: hacia atrás (el lote + sus ancestros) y hacia adelante.
+    const idsAtras = [id, ...ancestros.map((a) => a.padre_id)];
+    const idsAdelante = [id, ...descendientes.map((d) => d.hijo_id)];
+
+    // Códigos legibles de todos los lotes del grafo.
+    const codigos = new Map(
+      (
+        await this.prisma.lote.findMany({
+          where: { id: { in: [...idsAtras, ...idsAdelante] } },
+          select: { id: true, codigo: true },
+        })
+      ).map((l) => [l.id, l.codigo]),
+    );
+
+    // Recepciones de origen del lote y de sus ancestros.
+    const recepciones = await this.prisma.loteOrigenRecepcion.findMany({
+      where: { loteId: { in: idsAtras } },
+      select: {
+        cantidadKg: true,
+        lote: {
+          select: { codigo: true },
+        },
+        recepcion: {
+          select: {
+            id: true,
+            capturadoEn: true,
+            productor: {
+              select: { codigo: true, nombre: true },
+            },
+            finca: {
+              select: { nombre: true },
+            },
+          },
+        },
+      },
+    });
+
+    // Ventas del lote y de sus descendientes.
+    const ventas = await this.prisma.venta.findMany({
+      where: { loteId: { in: idsAdelante } },
+      select: {
+        id: true,
+        cantidadKg: true,
+        vendidoEn: true,
+        destino: true,
+        lote: {
+          select: { codigo: true },
+        },
+        comprador: {
+          select: {
+            id: true,
+            nombre: true,
+            pais: true,
+          },
+        },
+      },
+    });
+
+    // Une cada arista del grafo con los códigos legibles de padre e hijo.
+    const conCodigos = (filas: FilaGrafo[]) =>
+      filas.map((f) => ({
+        nivel: f.nivel,
+        tipo: f.tipo,
+        cantidadKg: f.cantidad_kg,
+        padre: { id: f.padre_id, codigo: codigos.get(f.padre_id) },
+        hijo: { id: f.hijo_id, codigo: codigos.get(f.hijo_id) },
+      }));
+
+    return {
+      lote,
+      haciaAtras: { lotes: conCodigos(ancestros), recepciones },
+      haciaAdelante: { lotes: conCodigos(descendientes), ventas },
+    };
+  }
+
 
   // Convierte errores de la base de datos en respuestas HTTP claras.
   private traducirError(error: unknown): never {
