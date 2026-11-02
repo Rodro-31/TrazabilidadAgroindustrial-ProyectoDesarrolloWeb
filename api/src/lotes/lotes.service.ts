@@ -338,6 +338,53 @@ export class LotesService {
     return this.obtener(id);
   }
 
+  // Kárdex del lote: su libro de inventario completo (solo se inserta, nunca se edita).
+  // Cada movimiento trae el saldo que quedó en ese centro después de aplicarlo.
+  async movimientos(id: string) {
+    const lote = await this.prisma.lote.findUnique({ where: { id }, select: { id: true } });
+    if (!lote) throw new NotFoundException('Lote no encontrado');
+
+    // Los movimientos de una misma transacción comparten la hora (now() es la hora de
+    // inicio de la transacción); entre ellos, el saldo creciente da el orden real.
+    const movimientos = await this.prisma.movimientoInventario.findMany({
+      where: { loteId: id },
+      orderBy: [{ creadoEn: 'asc' }, { saldoKg: 'asc' }],
+      select: {
+        id: true,
+        tipo: true,
+        cantidadKg: true,
+        saldoKg: true,
+        referenciaTipo: true,
+        referenciaId: true,
+        motivo: true,
+        creadoEn: true,
+        centro: { select: { codigo: true } },
+        usuario: { select: { nombre: true } },
+      },
+    });
+
+    // La referencia es un id suelto (puede ser de una recepción o de un proceso):
+    // se traduce a algo legible con una consulta por tipo, no una por movimiento.
+    const ids = (tipo: string) => movimientos.filter((m) => m.referenciaTipo === tipo).map((m) => m.referenciaId!);
+    const [recepciones, procesos] = await Promise.all([
+      this.prisma.recepcion.findMany({
+        where: { id: { in: ids('RECEPCION') } },
+        select: { id: true, productor: { select: { nombre: true } } },
+      }),
+      this.prisma.proceso.findMany({ where: { id: { in: ids('PROCESO') } }, select: { id: true, codigo: true, tipo: true } }),
+    ]);
+    const nombres = new Map<string, string>([
+      ...recepciones.map((r) => [r.id, `Recepción de ${r.productor.nombre}`] as [string, string]),
+      ...procesos.map((p) => [p.id, `Proceso ${p.codigo} (${p.tipo})`] as [string, string]),
+    ]);
+    const legible = (m: (typeof movimientos)[number]) => {
+      if (m.referenciaTipo === 'ANULACION') return 'Anulación del lote';
+      return m.referenciaId ? (nombres.get(m.referenciaId) ?? m.referenciaTipo) : null;
+    };
+
+    return movimientos.map((m) => ({ ...m, referencia: legible(m) }));
+  }
+
   // Para reimprimir la etiqueta: el valor del QR solo existe al crearlo (en la base
   // queda su hash), así que se revoca el anterior y se emite uno nuevo. Mismo
   // criterio que el comprobante de recepciones.

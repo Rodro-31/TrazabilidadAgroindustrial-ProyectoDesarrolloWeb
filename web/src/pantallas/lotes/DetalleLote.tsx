@@ -3,6 +3,7 @@ import { api } from '../../api';
 import { useAuth } from '../../auth';
 import { ESTADO_LOTE, fecha, kg, mensajeError, PRODUCTO } from '../../formato';
 import Etiqueta from './Etiqueta';
+import Movimientos from './Movimientos';
 import { existenciaTotal, type LoteDetalle, type QrEmitido } from './tipos';
 
 const ROLES_ETIQUETA = ['ADMIN', 'SUPERVISOR', 'BASCULA'];
@@ -162,6 +163,10 @@ export default function DetalleLote({
           {lote.existencias.map((e) => <li key={e.centro.id}>{e.centro.codigo} · {e.centro.nombre}: <strong>{kg(e.cantidadKg)}</strong></li>)}
         </ul>
       )}
+
+      <h3>Movimientos de inventario</h3>
+      {/* key: se vuelve a pedir si el lote cambia (por ejemplo, después de anularlo). */}
+      <Movimientos key={lote.estado} loteId={lote.id} />
 
       <h3>Historial de estados</h3>
       <ol className="historial">

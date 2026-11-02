@@ -42,6 +42,12 @@ export class LotesController {
     return this.lotes.obtener(id);
   }
 
+  // GET /api/v1/lotes/:id/movimientos (kárdex: entradas y salidas de inventario)
+  @Get(':id/movimientos')
+  movimientos(@Param('id', ParseUUIDPipe) id: string) {
+    return this.lotes.movimientos(id);
+  }
+
   // GET /api/v1/lotes/:id/trazabilidad (hacia atrás y hacia adelante)
   @Get(':id/trazabilidad')
   trazabilidad(@Param('id', ParseUUIDPipe) id: string) {
