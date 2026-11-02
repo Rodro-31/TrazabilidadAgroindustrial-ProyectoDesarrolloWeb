@@ -25,7 +25,8 @@ label input { margin-top: 4px; font-weight: normal; }
 
 .app { display: grid; grid-template-columns: 230px 1fr; min-height: 100vh; }
 .lateral { background: var(--verde); color: #fff; display: flex; flex-direction: column; padding: 16px 12px; gap: 16px; }
-.marca { font-weight: 700; font-size: 1.1rem; padding: 0 8px; }
+.marca { font-weight: 700; font-size: 1.1rem; padding: 0 8px; display: flex; align-items: center; gap: 10px; }
+.marca img { border-radius: 8px; }
 .lateral nav { display: flex; flex-direction: column; gap: 4px; flex: 1; }
 .lateral nav a { color: #dce9e3; text-decoration: none; padding: 9px 10px; border-radius: 8px; }
 .lateral nav a:hover { background: rgba(255,255,255,.1); }
@@ -49,6 +50,7 @@ td.vacio { text-align: center; color: #5b6661; padding: 24px; }
 .paginacion { display: flex; justify-content: space-between; align-items: center; padding: 8px; gap: 8px; flex-wrap: wrap; }
 
 .login { max-width: 360px; margin: 0 auto; padding: 64px 16px; }
+.login .logo { border-radius: 16px; }
 .login .sub { margin-top: -8px; color: #5b6661; }
 .login button { width: 100%; }
 

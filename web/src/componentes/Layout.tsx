@@ -9,7 +9,10 @@ export default function Layout() {
   return (
     <div className="app">
       <aside className="lateral">
-        <div className="marca">Trazabilidad</div>
+        <div className="marca">
+          <img src="/icon-192.png" alt="" width={32} height={32} />
+          Trazabilidad
+        </div>
         <nav>
           <NavLink to="/" end>Inicio</NavLink>
           {modulos.map((m) => (
