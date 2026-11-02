@@ -85,6 +85,9 @@ fieldset { border: 1px solid var(--borde); border-radius: 10px; margin: 0 0 12px
 .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 12px; }
 .galeria img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--borde); }
 
+.item.tocable { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.item.tocable:active { background: var(--verde-claro); }
+
 @media print {
   .barra, button, .nota { display: none !important; }
   body { background: #fff; }
