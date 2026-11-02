@@ -7,6 +7,7 @@ import { ESTADO_LOTE, kg, PRODUCTO, soloFecha } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
 import DetalleLote from './lotes/DetalleLote';
 import NuevoLote from './lotes/NuevoLote';
+import Trazabilidad from './lotes/Trazabilidad';
 import { existenciaTotal, type LoteFila, type QrEmitido } from './lotes/tipos';
 
 const ROLES_CREAR = ['ADMIN', 'SUPERVISOR', 'BASCULA'];
@@ -23,8 +24,25 @@ export default function Lotes() {
   const volver = () => setParams({});
 
   let vista;
-  if (id) {
-    vista = <DetalleLote key={id} id={id} qrInicial={recien?.id === id ? recien.qr : undefined} alVolver={volver} />;
+  if (id && params.get('traza')) {
+    // ?id=<lote>&traza=1 → trazabilidad; tocar otro lote del camino salta a SU trazabilidad.
+    vista = (
+      <Trazabilidad
+        id={id}
+        alVolver={() => setParams({ id })}
+        alAbrirLote={(otro) => setParams({ id: otro, traza: '1' })}
+      />
+    );
+  } else if (id) {
+    vista = (
+      <DetalleLote
+        key={id}
+        id={id}
+        qrInicial={recien?.id === id ? recien.qr : undefined}
+        alVolver={volver}
+        alVerTrazabilidad={() => setParams({ id, traza: '1' })}
+      />
+    );
   } else if (params.get('nuevo') && ROLES_CREAR.includes(sesion!.rol)) {
     vista = (
       <NuevoLote

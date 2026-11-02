@@ -127,3 +127,8 @@ input.invalido { border-color: var(--error); }
 .centros legend { padding: 0 4px; color: #5b6661; }
 .casilla { display: flex; align-items: center; gap: 6px; font-weight: normal; }
 .casilla input { width: auto; margin: 0; }
+
+/* --- Trazabilidad (Integrante 2) --- */
+.camino { list-style: none; margin: 0; padding: 0 0 0 12px; border-left: 3px solid var(--verde-claro); display: grid; gap: 10px; }
+.camino li { display: grid; gap: 4px; }
+.camino strong { font-size: .8rem; color: #5b6661; text-transform: uppercase; letter-spacing: .03em; }

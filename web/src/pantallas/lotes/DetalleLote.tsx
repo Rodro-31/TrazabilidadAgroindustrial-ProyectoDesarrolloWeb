@@ -13,10 +13,12 @@ export default function DetalleLote({
   id,
   qrInicial,
   alVolver,
+  alVerTrazabilidad,
 }: {
   id: string;
   qrInicial?: QrEmitido; // presente justo después de crear el lote
   alVolver: () => void;
+  alVerTrazabilidad: () => void;
 }) {
   const { sesion } = useAuth();
   const rol = sesion!.rol;
@@ -77,6 +79,7 @@ export default function DetalleLote({
       <div className="barra">
         <button onClick={alVolver}>← Volver a la lista</button>
         <div className="acciones">
+          <button className="primario" onClick={alVerTrazabilidad}>Ver trazabilidad</button>
           {ROLES_ETIQUETA.includes(rol) && lote.estado !== 'ANULADO' && (
             <button onClick={reimprimir} disabled={ocupado}>Reimprimir etiqueta</button>
           )}
