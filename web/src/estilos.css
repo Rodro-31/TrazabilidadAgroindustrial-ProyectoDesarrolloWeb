@@ -169,3 +169,8 @@ input.invalido { border-color: var(--error); }
   .barras-pista { grid-column: 1 / -1; grid-row: 2; }
   .columnas { height: 120px; }
 }
+
+/* --- Procesos (Integrante 2) --- */
+.salida { align-items: end; }
+.salida button { margin-bottom: 12px; }
+.separado { margin-top: 16px; }

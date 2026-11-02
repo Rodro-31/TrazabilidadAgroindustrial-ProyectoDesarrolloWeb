@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Auditoria from './pantallas/Auditoria';
 import Catalogos from './pantallas/Catalogos';
 import Lotes from './pantallas/Lotes';
+import Procesos from './pantallas/Procesos';
 import Recepciones from './pantallas/Recepciones';
 import Usuarios from './pantallas/Usuarios';
 
@@ -38,6 +39,14 @@ export const MODULOS: Modulo[] = [
     descripcion: 'Lotes, origen, estados y QR',
     roles: ['ADMIN', 'SUPERVISOR', 'BASCULA', 'CALIDAD', 'AUDITOR'],
     pantalla: <Lotes />,
+  },
+  {
+    ruta: 'procesos',
+    titulo: 'Procesos',
+    descripcion: 'Mezcla, división, secado, limpieza y clasificación de lotes',
+    // Solo ADMIN y SUPERVISOR registran; los demás consultan (la pantalla oculta el botón).
+    roles: ['ADMIN', 'SUPERVISOR', 'CALIDAD', 'BASCULA', 'AUDITOR'],
+    pantalla: <Procesos />,
   },
   {
     ruta: 'recepciones',
