@@ -19,6 +19,7 @@ import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ArchivosModule } from './archivos/archivos.module';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { ProcesosModule } from './procesos/procesos.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProcesosModule } from './procesos/procesos.module';
     ArchivosModule,
     UsuariosModule,
     ProcesosModule,
+    DashboardModule,
   ],
   controllers: [HealthController],
   providers: [
