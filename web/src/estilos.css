@@ -196,3 +196,7 @@ input.invalido { border-color: var(--error); }
   .documento .tabla-scroll { overflow: visible; }
   .documento button.enlace { color: #000; text-decoration: none; }
 }
+
+/* --- Calidad y exportar recepciones (Integrante 1) --- */
+.exportar-recepciones { justify-content: flex-end; margin: -4px 0 12px; }
+textarea { display: block; width: 100%; margin-top: 4px; padding: 6px 10px; font: inherit; font-weight: normal; border: 1px solid var(--borde); border-radius: 8px; background: #fff; resize: vertical; }

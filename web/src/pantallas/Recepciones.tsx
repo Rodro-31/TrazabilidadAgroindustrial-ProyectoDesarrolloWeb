@@ -1,11 +1,13 @@
 import { FormEvent, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api, descargarBlob, listarTodo } from '../api';
 import { useAuth } from '../auth';
+import Exportar from '../componentes/Exportar';
 import Tabla, { type Columna } from '../componentes/Tabla';
 import { fecha, kg, mensajeError, PRODUCTO } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
+import { ROLES_INSPECCIONAR } from './Calidad';
 
 interface RecepcionFila {
   id: string;
@@ -67,13 +69,14 @@ function Lista({ alAbrir }: { alAbrir: (id: string) => void }) {
     listarTodo<{ id: string; codigo: string; nombre: string }>('/productores').then(setProductores).catch(() => setProductores([]));
   }, []);
 
-  const lista = usePaginado<RecepcionFila>('/recepciones', {
+  const filtros = {
     centroId: f.centroId,
     productorId: f.productorId,
     estadoProducto: f.estadoProducto,
     desde: inicioDia(f.desde),
     hasta: finDia(f.hasta),
-  });
+  };
+  const lista = usePaginado<RecepcionFila>('/recepciones', filtros);
   const cambiar = (campo: keyof typeof f) => (e: { target: { value: string } }) => setF({ ...f, [campo]: e.target.value });
 
   const columnas: Columna<RecepcionFila>[] = [
@@ -113,6 +116,23 @@ function Lista({ alAbrir }: { alAbrir: (id: string) => void }) {
         <label>Desde<input type="date" value={f.desde} onChange={cambiar('desde')} /></label>
         <label>Hasta<input type="date" value={f.hasta} onChange={cambiar('hasta')} /></label>
       </form>
+      <div className="acciones exportar-recepciones">
+        <Exportar<RecepcionFila>
+          ruta="/recepciones"
+          filtros={filtros}
+          nombre="recepciones"
+          columnas={[
+            { titulo: 'Capturada', valor: (r) => fecha(r.capturadoEn) },
+            { titulo: 'Código productor', valor: (r) => r.productor.codigo },
+            { titulo: 'Productor', valor: (r) => r.productor.nombre },
+            { titulo: 'Finca', valor: (r) => r.finca.nombre },
+            { titulo: 'Centro', valor: (r) => r.centro.nombre },
+            { titulo: 'Producto', valor: (r) => PRODUCTO[r.estadoProducto] ?? r.estadoProducto },
+            { titulo: 'Peso neto (kg)', valor: (r) => r.pesoNetoKg },
+            { titulo: 'Registró', valor: (r) => r.registradoPor.nombre },
+          ]}
+        />
+      </div>
       <Tabla
         columnas={columnas}
         filas={lista.datos}
@@ -138,6 +158,7 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
   const [qr, setQr] = useState<{ valor: string; url: string | null } | null>(null);
   const [aviso, setAviso] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const navegar = useNavigate();
 
   async function nuevoQr() {
     if (!confirm('Se emitirá un QR nuevo y el anterior dejará de servir. ¿Continuar?')) return;
@@ -184,9 +205,14 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
     <div>
       <div className="barra">
         <button onClick={alVolver}>← Volver a la lista</button>
-        {ROLES_QR.includes(sesion?.rol ?? '') && (
-          <button onClick={nuevoQr} disabled={ocupado}>Reimprimir comprobante (QR nuevo)</button>
-        )}
+        <div className="acciones">
+          {ROLES_INSPECCIONAR.includes(sesion?.rol ?? '') && (
+            <button onClick={() => navegar(`/calidad?nuevo=1&recepcionId=${id}`)}>Inspeccionar calidad</button>
+          )}
+          {ROLES_QR.includes(sesion?.rol ?? '') && (
+            <button onClick={nuevoQr} disabled={ocupado}>Reimprimir comprobante (QR nuevo)</button>
+          )}
+        </div>
       </div>
       <h2>{r.productor.codigo} · {r.productor.nombre}</h2>
       {aviso && <p className="aviso" role="status">{aviso}</p>}
