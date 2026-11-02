@@ -22,6 +22,7 @@ import { ProcesosModule } from './procesos/procesos.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TrasladosModule } from './traslados/traslados.module';
 import { LiquidacionesModule } from './liquidaciones/liquidaciones.module';
+import { PreciosModule } from './precios/precios.module';
 import { CalidadModule } from './calidad/calidad.module';
 import { TareasModule } from './tareas/tareas.module';
 
@@ -48,6 +49,7 @@ import { TareasModule } from './tareas/tareas.module';
     DashboardModule,
     TrasladosModule,
     LiquidacionesModule,
+    PreciosModule,
   ],
   controllers: [HealthController],
   providers: [
