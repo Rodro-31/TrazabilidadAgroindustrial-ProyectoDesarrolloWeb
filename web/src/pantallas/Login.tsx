@@ -24,6 +24,7 @@ export default function Login() {
 
   return (
     <main className="login">
+      <img src="/icon-192.png" alt="" width={72} height={72} className="logo" />
       <h1>Trazabilidad agroindustrial</h1>
       <p className="sub">Administración</p>
       <form onSubmit={enviar}>
