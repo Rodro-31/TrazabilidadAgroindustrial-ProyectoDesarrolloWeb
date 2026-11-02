@@ -42,6 +42,12 @@ export class LotesController {
     return this.lotes.obtener(id);
   }
 
+  // GET /api/v1/lotes/:id/trazabilidad (hacia atrás y hacia adelante)
+  @Get(':id/trazabilidad')
+  trazabilidad(@Param('id', ParseUUIDPipe) id: string) {
+    return this.lotes.trazabilidad(id);
+  }
+
   // Responde el lote y su QR ({ valor, url }) para imprimir la etiqueta.
   @Roles('ADMIN', 'SUPERVISOR', 'BASCULA')
   @Post()
