@@ -1,4 +1,5 @@
 import { FormEvent, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ApiError } from '../api';
 import { useAuth } from '../auth';
 
@@ -46,6 +47,7 @@ export default function Login() {
         {error && <p className="error" role="alert">{error}</p>}
         <button className="primario" disabled={cargando}>{cargando ? 'Entrando…' : 'Entrar'}</button>
       </form>
+      <p className="enlace-login"><Link to="/recuperar">¿Olvidaste tu contraseña?</Link></p>
     </main>
   );
 }

@@ -1,6 +1,13 @@
 import { FormEvent, useState } from 'react';
 import { ApiError, iniciarSesion, type Sesion } from '../api';
 
+// La recuperación de contraseña vive en el panel web (app.<dominio>/recuperar).
+function urlRecuperar(): string {
+  const host = location.hostname;
+  if (host.startsWith('campo.')) return `${location.protocol}//app.${host.slice('campo.'.length)}/recuperar`;
+  return 'http://localhost:8081/recuperar';
+}
+
 export default function Login({ alEntrar }: { alEntrar: (s: Sesion) => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,6 +53,9 @@ export default function Login({ alEntrar }: { alEntrar: (s: Sesion) => void }) {
           {cargando ? 'Entrando…' : 'Entrar'}
         </button>
       </form>
+      <p className="enlace-login">
+        <a href={urlRecuperar()}>¿Olvidaste tu contraseña?</a>
+      </p>
     </main>
   );
 }
