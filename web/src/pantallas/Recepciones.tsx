@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { useSearchParams } from 'react-router-dom';
 import { api, descargarBlob, listarTodo } from '../api';
@@ -37,13 +37,15 @@ interface RecepcionDetalle extends RecepcionFila {
 }
 
 const ROLES_QR = ['ADMIN', 'SUPERVISOR', 'BASCULA'];
+// Los mismos roles que la API acepta en POST /recepciones/:id/pesajes.
+const ROLES_PESAJE = ['ADMIN', 'SUPERVISOR', 'BASCULA'];
 
 // Una fecha "2026-11-01" del filtro se convierte al inicio o al final de ese día (hora local),
 // porque la API compara contra instantes exactos.
 const inicioDia = (d: string) => (d ? new Date(`${d}T00:00:00`).toISOString() : '');
 const finDia = (d: string) => (d ? new Date(`${d}T23:59:59.999`).toISOString() : '');
 
-// Consulta de recepciones (solo lectura). La vista va en la URL: ?id=<recepción> para el detalle.
+// Consulta de recepciones; báscula, supervisor y admin además registran pesajes y reimprimen el QR. La vista va en la URL: ?id=<recepción> para el detalle.
 export default function Recepciones() {
   const [params, setParams] = useSearchParams();
   const id = params.get('id');
@@ -235,7 +237,74 @@ function Detalle({ id, alVolver }: { id: string; alVolver: () => void }) {
           </table>
         </div>
       </div>
+
+      {ROLES_PESAJE.includes(sesion?.rol ?? '') && <NuevoPesaje id={r.id} alGuardar={setR} />}
     </div>
+  );
+}
+
+// Kilos con máximo 2 decimales; acepta coma o punto. null = inválido, undefined = vacío.
+function leerKg(texto: string): number | null | undefined {
+  const t = texto.trim().replace(',', '.');
+  if (t === '') return undefined;
+  const n = Number(t);
+  if (!Number.isFinite(n) || n < 0 || Math.abs(Math.round(n * 100) - n * 100) > 1e-6) return null;
+  return n;
+}
+
+// Báscula: un pesaje nuevo no borra el anterior, se agrega al historial y pasa a ser el
+// peso vigente. La API lo rechaza (409) si la recepción ya está en un lote o liquidada.
+function NuevoPesaje({ id, alGuardar }: { id: string; alGuardar: (r: RecepcionDetalle) => void }) {
+  const [bruto, setBruto] = useState('');
+  const [tara, setTara] = useState('');
+  const [motivo, setMotivo] = useState('');
+  const [mensaje, setMensaje] = useState<{ tipo: 'aviso' | 'error'; texto: string } | null>(null);
+  const [enviando, setEnviando] = useState(false);
+
+  const b = leerKg(bruto);
+  const t = leerKg(tara) ?? 0;
+  const neto = typeof b === 'number' && typeof t === 'number' ? b - t : null;
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault();
+    setMensaje(null);
+    if (typeof b !== 'number' || b <= 0) return setMensaje({ tipo: 'error', texto: 'Peso bruto inválido (mayor que 0, máximo 2 decimales).' });
+    if (t === null) return setMensaje({ tipo: 'error', texto: 'Tara inválida (máximo 2 decimales).' });
+    if (neto === null || neto <= 0) return setMensaje({ tipo: 'error', texto: 'La tara debe ser menor que el peso bruto.' });
+    setEnviando(true);
+    try {
+      const { data } = await api.post<RecepcionDetalle>(`/recepciones/${id}/pesajes`, {
+        pesoBrutoKg: b,
+        taraKg: t,
+        ...(motivo.trim() && { motivo: motivo.trim() }),
+      });
+      alGuardar(data);
+      setBruto('');
+      setTara('');
+      setMotivo('');
+      setMensaje({ tipo: 'aviso', texto: 'Pesaje registrado. El anterior queda en el historial.' });
+    } catch (err) {
+      setMensaje({ tipo: 'error', texto: mensajeError(err) });
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <form className="panel" onSubmit={enviar}>
+      <h3>Registrar nuevo pesaje</h3>
+      <div className="rejilla">
+        <label>Peso bruto (kg) <span className="obligatorio">*</span><input inputMode="decimal" value={bruto} onChange={(e) => setBruto(e.target.value)} required /></label>
+        <label>Tara (kg)<input inputMode="decimal" value={tara} onChange={(e) => setTara(e.target.value)} placeholder="0" /></label>
+        <label>Motivo<input value={motivo} maxLength={500} onChange={(e) => setMotivo(e.target.value)} placeholder="Ej.: corrección de báscula" /></label>
+      </div>
+      {neto !== null && neto > 0 && <p className="nota">Peso neto: {kg(neto)}</p>}
+      {mensaje && <p className={mensaje.tipo} role={mensaje.tipo === 'error' ? 'alert' : 'status'}>{mensaje.texto}</p>}
+      <div className="acciones">
+        <button className="primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Registrar pesaje'}</button>
+      </div>
+      <p className="nota">No se puede cambiar el peso si la recepción ya forma parte de un lote o fue liquidada.</p>
+    </form>
   );
 }
 
