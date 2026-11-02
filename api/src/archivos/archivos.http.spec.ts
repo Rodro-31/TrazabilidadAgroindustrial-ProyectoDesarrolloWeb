@@ -58,7 +58,7 @@ describe('Fotos de recepción (HTTP)', () => {
 
   const subir = (bytes: Buffer, id = REC) => {
     const form = new FormData();
-    form.append('archivo', new Blob([bytes]), 'foto.jpg');
+    form.append('archivo', new Blob([new Uint8Array(bytes)]), 'foto.jpg');
     return fetch(`${url}/api/v1/recepciones/${id}/fotos`, { method: 'POST', body: form });
   };
 
