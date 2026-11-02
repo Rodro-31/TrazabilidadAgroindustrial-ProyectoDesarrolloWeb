@@ -57,7 +57,9 @@ export class ProductoresService {
     return { datos, total, pagina: filtros.pagina, limite: filtros.limite };
   }
 
-  async obtener(id: string) {
+  // El DPI es un dato sensible: solo lo recibe quien puede editar productores
+  // (lo necesita el formulario de edición). Al resto se le quita de la respuesta.
+  async obtener(id: string, verDpi: boolean) {
     const productor = await this.prisma.productor.findUnique({
       where: { id },
       include: {
@@ -66,7 +68,9 @@ export class ProductoresService {
       },
     });
     if (!productor) throw new NotFoundException('Productor no encontrado');
-    return productor;
+    if (verDpi) return productor;
+    const { dpi: _dpi, ...sinDpi } = productor;
+    return sinDpi;
   }
 
   // Entregas recientes del productor (la usa la PWA al consultar un productor).
