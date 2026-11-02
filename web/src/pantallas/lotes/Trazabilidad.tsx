@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
+import { BotonPdf } from '../../componentes/Exportar';
 import { ESTADO_LOTE, fecha, kg, mensajeError, PRODUCTO } from '../../formato';
 import type { AristaLote, Trazabilidad as Datos } from './tipos';
 
@@ -32,11 +33,14 @@ export default function Trazabilidad({
   const { lote, haciaAtras, haciaAdelante } = datos;
 
   return (
-    <div>
-      <div className="barra">
+    // "documento": al imprimir o guardar como PDF sale como certificado, sin menú ni botones.
+    <div className="documento">
+      <div className="barra no-imprimir">
         <button onClick={alVolver}>← Volver al lote</button>
+        <BotonPdf texto="Certificado PDF" />
       </div>
 
+      <p className="solo-impresion">Plataforma de Trazabilidad Agroindustrial · Certificado de trazabilidad · generado {fecha(new Date().toISOString())}</p>
       <h2>
         Trazabilidad del lote {lote.codigo}
         <span className={`insignia estado-${lote.estado}`}>{ESTADO_LOTE[lote.estado] ?? lote.estado}</span>

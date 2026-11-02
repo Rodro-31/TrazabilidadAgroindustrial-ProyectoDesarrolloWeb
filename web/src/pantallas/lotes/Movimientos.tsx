@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
+import { descargarCsv } from '../../componentes/Exportar';
 import { fecha, kg, mensajeError } from '../../formato';
 
 interface Movimiento {
@@ -26,7 +27,7 @@ const TIPO_MOVIMIENTO: Record<string, string> = {
 
 // Kárdex del lote: cada entrada (+) y salida (−) con el saldo que dejó.
 // Es un libro: los movimientos solo se agregan, nunca se editan ni se borran.
-export default function Movimientos({ loteId }: { loteId: string }) {
+export default function Movimientos({ loteId, codigo }: { loteId: string; codigo: string }) {
   const [movimientos, setMovimientos] = useState<Movimiento[] | null>(null);
   const [error, setError] = useState('');
 
@@ -38,8 +39,21 @@ export default function Movimientos({ loteId }: { loteId: string }) {
   if (!movimientos) return <p className="nota">Cargando…</p>;
   if (movimientos.length === 0) return <p className="nota">Sin movimientos.</p>;
 
+  // Los datos ya están en pantalla: se exportan directo, sin volver a pedirlos.
+  const exportar = () =>
+    descargarCsv(`kardex-${codigo}`, [
+      { titulo: 'Fecha', valor: (m: Movimiento) => fecha(m.creadoEn) },
+      { titulo: 'Movimiento', valor: (m: Movimiento) => TIPO_MOVIMIENTO[m.tipo] ?? m.tipo },
+      { titulo: 'Kg', valor: (m: Movimiento) => m.cantidadKg },
+      { titulo: 'Saldo (kg)', valor: (m: Movimiento) => m.saldoKg },
+      { titulo: 'Centro', valor: (m: Movimiento) => m.centro.codigo },
+      { titulo: 'Origen o destino', valor: (m: Movimiento) => [m.referencia, m.motivo].filter(Boolean).join(' · ') },
+      { titulo: 'Usuario', valor: (m: Movimiento) => m.usuario.nombre },
+    ], movimientos);
+
   return (
     <div className="tabla-scroll">
+      <div className="acciones no-imprimir"><button type="button" onClick={exportar}>Exportar a Excel</button></div>
       <table>
         <thead>
           <tr><th>Fecha</th><th>Movimiento</th><th>Kg</th><th>Saldo</th><th>Centro</th><th>Origen o destino</th><th>Usuario</th></tr>

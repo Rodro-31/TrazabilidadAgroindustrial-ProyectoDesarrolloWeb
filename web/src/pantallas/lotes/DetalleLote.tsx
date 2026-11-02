@@ -166,7 +166,7 @@ export default function DetalleLote({
 
       <h3>Movimientos de inventario</h3>
       {/* key: se vuelve a pedir si el lote cambia (por ejemplo, después de anularlo). */}
-      <Movimientos key={lote.estado} loteId={lote.id} />
+      <Movimientos key={lote.estado} loteId={lote.id} codigo={lote.codigo} />
 
       <h3>Historial de estados</h3>
       <ol className="historial">

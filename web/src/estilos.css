@@ -182,3 +182,17 @@ input.invalido { border-color: var(--error); }
 
 /* --- Traslados (Integrante 2) --- */
 .codigo-confirmacion { font-family: ui-monospace, monospace; font-size: .8rem; word-break: break-all; background: #f0f3f1; padding: 4px 6px; border-radius: 6px; }
+
+/* --- Reportes: impresión / PDF de documentos (Integrante 2) --- */
+.solo-impresion { display: none; }
+.firmas { gap: 48px; margin-top: 64px; }
+.firmas span { flex: 1; border-top: 1px solid #000; padding-top: 6px; text-align: center; font-size: .85rem; }
+@media print {
+  .documento, .documento * { visibility: visible; }
+  .documento { position: absolute; left: 0; top: 0; width: 100%; }
+  .documento .no-imprimir { display: none !important; }
+  .documento .solo-impresion { display: block; color: #000; font-size: .8rem; border-bottom: 1px solid #000; padding-bottom: 6px; }
+  .documento .firmas.solo-impresion { display: flex; border: 0; }
+  .documento .tabla-scroll { overflow: visible; }
+  .documento button.enlace { color: #000; text-decoration: none; }
+}

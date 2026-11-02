@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { listarTodo } from '../api';
 import { useAuth } from '../auth';
+import Exportar from '../componentes/Exportar';
 import Tabla, { type Columna } from '../componentes/Tabla';
 import { ESTADO_LOTE, kg, PRODUCTO, soloFecha } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
@@ -127,7 +128,26 @@ function ListaLotes({ puedeCrear, alAbrir, alNuevo }: { puedeCrear: boolean; alA
           </label>
           <label>Cosecha<input type="number" value={f.cosecha} onChange={cambiar('cosecha')} placeholder="2026" /></label>
         </form>
-        {puedeCrear && <button className="primario" onClick={alNuevo}>Nuevo lote</button>}
+        <div className="acciones">
+          <Exportar<LoteFila>
+            ruta="/lotes"
+            filtros={{ ...f, buscar: f.buscar.trim() }}
+            nombre="existencias-lotes"
+            columnas={[
+              { titulo: 'Código', valor: (l) => l.codigo },
+              { titulo: 'Estado', valor: (l) => ESTADO_LOTE[l.estado] ?? l.estado },
+              { titulo: 'Producto', valor: (l) => PRODUCTO[l.estadoProducto] },
+              { titulo: 'Grado', valor: (l) => l.gradoCalidad?.nombre },
+              { titulo: 'Existencia (kg)', valor: (l) => existenciaTotal(l) },
+              { titulo: 'Dónde está', valor: (l) => l.existencias.map((e) => e.centro.codigo).join(' ') },
+              { titulo: 'Peso inicial (kg)', valor: (l) => l.pesoInicialKg },
+              { titulo: 'Cosecha', valor: (l) => l.cosecha },
+              { titulo: 'Centro de creación', valor: (l) => l.centro.codigo },
+              { titulo: 'Creado', valor: (l) => soloFecha(l.creadoEn) },
+            ]}
+          />
+          {puedeCrear && <button className="primario" onClick={alNuevo}>Nuevo lote</button>}
+        </div>
       </div>
       <Tabla
         columnas={columnas}

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import { api, listarTodo } from '../api';
 import { useAuth } from '../auth';
+import Exportar from '../componentes/Exportar';
 import Tabla, { type Columna } from '../componentes/Tabla';
 import { fecha, kg, mensajeError, PRODUCTO } from '../formato';
 import { usePaginado } from '../hooks/usePaginado';
@@ -123,7 +124,27 @@ function ListaTraslados({ puedeCrear, alAbrir, alNuevo }: { puedeCrear: boolean;
             </select>
           </label>
         </form>
-        {puedeCrear && <button className="primario" onClick={alNuevo}>Despachar lote</button>}
+        <div className="acciones">
+          <Exportar<Traslado>
+            ruta="/traslados"
+            filtros={f}
+            nombre="traslados"
+            columnas={[
+              { titulo: 'Código', valor: (t) => t.codigo },
+              { titulo: 'Estado', valor: (t) => ESTADO_TRASLADO[t.estado]?.texto ?? t.estado },
+              { titulo: 'Lote', valor: (t) => t.lote.codigo },
+              { titulo: 'Origen', valor: (t) => t.origen.codigo },
+              { titulo: 'Destino', valor: (t) => t.destino.codigo },
+              { titulo: 'Enviado (kg)', valor: (t) => t.cantidadKg },
+              { titulo: 'Recibido (kg)', valor: (t) => t.cantidadRecibidaKg },
+              { titulo: 'Despachado', valor: (t) => fecha(t.despachadoEn) },
+              { titulo: 'Recibido', valor: (t) => (t.recibidoEn ? fecha(t.recibidoEn) : '') },
+              { titulo: 'Despachó', valor: (t) => t.solicitadoPor.nombre },
+              { titulo: 'Recibió', valor: (t) => t.recibidoPor?.nombre },
+            ]}
+          />
+          {puedeCrear && <button className="primario" onClick={alNuevo}>Despachar lote</button>}
+        </div>
       </div>
       <Tabla
         columnas={columnas}
