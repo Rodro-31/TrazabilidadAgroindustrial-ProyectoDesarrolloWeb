@@ -12,8 +12,19 @@ export interface ColumnaCsv<T> {
 // - BOM (﻿) al inicio: Excel reconoce UTF-8 y muestra bien acentos y la ñ.
 // - Comillas en cada celda y "" para las comillas internas (formato RFC 4180).
 // - Separador "," y decimales con punto, como la configuración regional de Guatemala.
+// - Inyección de fórmulas (CSV injection): un texto que empieza con = + - @ (o tabulador /
+//   retorno) Excel lo ejecuta como fórmula. Se le antepone ' para que quede como texto.
+//   Los números (incluidos los negativos del kárdex, "-300") no se tocan.
+const NUMERO = /^-?\d+(\.\d+)?$/;
+const PELIGROSO = /^[=+\-@\t\r]/;
+
+function textoSeguro(v: unknown): string {
+  const texto = String(v ?? '');
+  return typeof v !== 'number' && !NUMERO.test(texto) && PELIGROSO.test(texto) ? `'${texto}` : texto;
+}
+
 export function descargarCsv<T>(nombre: string, columnas: ColumnaCsv<T>[], filas: T[]) {
-  const celda = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const celda = (v: unknown) => `"${textoSeguro(v).replace(/"/g, '""')}"`;
   const lineas = [
     columnas.map((c) => celda(c.titulo)).join(','),
     ...filas.map((f) => columnas.map((c) => celda(c.valor(f))).join(',')),
