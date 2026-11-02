@@ -2,7 +2,9 @@ import type { ReactNode } from 'react';
 import Auditoria from './pantallas/Auditoria';
 import Catalogos from './pantallas/Catalogos';
 import Lotes from './pantallas/Lotes';
+import Liquidaciones from './pantallas/Liquidaciones';
 import Procesos from './pantallas/Procesos';
+import Traslados from './pantallas/Traslados';
 import Recepciones from './pantallas/Recepciones';
 import Usuarios from './pantallas/Usuarios';
 
@@ -47,6 +49,22 @@ export const MODULOS: Modulo[] = [
     // Solo ADMIN y SUPERVISOR registran; los demás consultan (la pantalla oculta el botón).
     roles: ['ADMIN', 'SUPERVISOR', 'CALIDAD', 'BASCULA', 'AUDITOR'],
     pantalla: <Procesos />,
+  },
+  {
+    ruta: 'traslados',
+    titulo: 'Traslados',
+    descripcion: 'Envío de lotes entre centros con código de confirmación',
+    // ADMIN, SUPERVISOR y BASCULA despachan y reciben; los demás consultan.
+    roles: ['ADMIN', 'SUPERVISOR', 'BASCULA', 'CALIDAD', 'AUDITOR'],
+    pantalla: <Traslados />,
+  },
+  {
+    ruta: 'liquidaciones',
+    titulo: 'Liquidaciones',
+    descripcion: 'Pago a productores por sus recepciones',
+    // Montos de dinero: solo quien los gestiona o audita.
+    roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'],
+    pantalla: <Liquidaciones />,
   },
   {
     ruta: 'recepciones',

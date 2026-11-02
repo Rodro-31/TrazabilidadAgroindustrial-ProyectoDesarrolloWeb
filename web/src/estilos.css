@@ -179,3 +179,6 @@ input.invalido { border-color: var(--error); }
 .entrada-kg { color: var(--verde); font-weight: 600; white-space: nowrap; }
 .salida-kg { color: var(--error); font-weight: 600; white-space: nowrap; }
 .saldo-kg { white-space: nowrap; }
+
+/* --- Traslados (Integrante 2) --- */
+.codigo-confirmacion { font-family: ui-monospace, monospace; font-size: .8rem; word-break: break-all; background: #f0f3f1; padding: 4px 6px; border-radius: 6px; }
