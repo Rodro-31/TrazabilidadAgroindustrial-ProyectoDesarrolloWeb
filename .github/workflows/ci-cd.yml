@@ -66,6 +66,10 @@ jobs:
   deploy:
     needs: build-push
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Un solo despliegue a la vez: si dos PRs se aprueban seguidos, el segundo espera al primero
+    concurrency:
+      group: deploy-prod
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - uses: appleboy/ssh-action@v1.0.3
@@ -77,5 +81,5 @@ jobs:
             cd /opt/trazabilidad
             git pull origin main
             docker compose --env-file .env -f deploy/docker-compose.prod.yml pull
-            docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d
+            docker compose --env-file .env -f deploy/docker-compose.prod.yml up -d --remove-orphans
             docker compose --env-file .env -f deploy/docker-compose.prod.yml exec -T api npx prisma migrate deploy
