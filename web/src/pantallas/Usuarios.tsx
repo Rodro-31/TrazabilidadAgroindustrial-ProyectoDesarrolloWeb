@@ -260,6 +260,63 @@ function FormPassword({ u, alCancelar, alTerminar }: FormProps & { u: Usuario })
         <button className="primario" disabled={enviando}>{enviando ? 'Guardando…' : 'Restablecer contraseña'}</button>
         <button type="button" onClick={alCancelar}>Cancelar</button>
       </div>
+      <EnlaceRecuperacion u={u} />
     </form>
+  );
+}
+
+// Alternativa sin que el administrador conozca la contraseña: genera un enlace de un solo
+// uso que vence en 30 minutos, para enviarlo a la persona por un canal privado.
+function EnlaceRecuperacion({ u }: { u: Usuario }) {
+  const [enlace, setEnlace] = useState<{ enlace: string; expiraEn: string } | null>(null);
+  const [error, setError] = useState('');
+  const [copiado, setCopiado] = useState(false);
+  const [generando, setGenerando] = useState(false);
+
+  async function generar() {
+    setError('');
+    setCopiado(false);
+    setGenerando(true);
+    try {
+      const { data } = await api.post<{ enlace: string; expiraEn: string }>('/auth/recuperar/enlace', { usuarioId: u.id });
+      setEnlace(data);
+    } catch (err) {
+      setError(mensaje(err));
+    } finally {
+      setGenerando(false);
+    }
+  }
+
+  async function copiar() {
+    if (!enlace) return;
+    try {
+      await navigator.clipboard.writeText(enlace.enlace);
+      setCopiado(true);
+    } catch {
+      setError('No se pudo copiar. Selecciona el enlace y cópialo a mano.');
+    }
+  }
+
+  return (
+    <div className="recuperacion">
+      <h3>O envíale un enlace de recuperación</h3>
+      <p className="nota">La persona elige su contraseña. El enlace vence en 30 minutos, sirve una vez y generar otro invalida el anterior.</p>
+      {enlace && (
+        <>
+          <div className="enlace-copiable">
+            <input readOnly value={enlace.enlace} onFocus={(e) => e.target.select()} aria-label="Enlace de recuperación" />
+            <button type="button" onClick={copiar}>{copiado ? 'Copiado' : 'Copiar'}</button>
+          </div>
+          <small className="nota">Vence a las {new Date(enlace.expiraEn).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}.</small>
+        </>
+      )}
+      {error && <p className="error" role="alert">{error}</p>}
+      <div className="acciones">
+        <button type="button" onClick={generar} disabled={generando || !u.activo}>
+          {generando ? 'Generando…' : enlace ? 'Generar otro enlace' : 'Generar enlace'}
+        </button>
+        {!u.activo && <small className="nota">La cuenta está desactivada.</small>}
+      </div>
+    </div>
   );
 }
