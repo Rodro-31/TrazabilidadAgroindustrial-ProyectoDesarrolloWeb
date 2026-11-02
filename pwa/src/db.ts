@@ -4,7 +4,7 @@ import Dexie, { type Table } from 'dexie';
 // El id es un UUID generado en el cliente, así los reintentos no duplican datos.
 export interface OperacionPendiente {
   id: string;
-  tipo: 'recepcion';
+  tipo: 'recepcion' | 'inspeccion';
   payload: unknown; // exactamente lo que se envía a la API
   resumen: string; // texto para mostrar en pantalla (no se envía)
   estado: 'PENDIENTE' | 'ENVIANDO' | 'ERROR';
@@ -15,7 +15,7 @@ export interface OperacionPendiente {
 
 // Copia local de los catálogos para poder capturar sin conexión.
 export interface CatalogoLocal {
-  clave: 'centros' | 'productores' | 'fincas';
+  clave: 'centros' | 'productores' | 'fincas' | 'grados';
   datos: unknown[];
   actualizadoEn: string;
 }

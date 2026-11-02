@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { Ruta } from '../App';
 import { fechaHora, kg } from '../util';
+import { ListaInspecciones, PUEDE_INSPECCIONAR } from './Inspeccion';
 
 interface Lote {
   id: string;
@@ -42,7 +43,7 @@ const ESTADO: Record<string, string> = {
 
 // Detalle de un lote al escanear su QR: estado, dónde está, cuánto queda y de qué
 // recepciones viene. Solo lectura; las operaciones sobre el lote se hacen en el panel web.
-export default function LoteDetalle({ id, ir }: { id: string; ir: (r: Ruta) => void }) {
+export default function LoteDetalle({ id, rol, ir }: { id: string; rol: string; ir: (r: Ruta) => void }) {
   const [l, setL] = useState<Lote | null>(null);
   const [error, setError] = useState('');
 
@@ -72,6 +73,13 @@ export default function LoteDetalle({ id, ir }: { id: string; ir: (r: Ruta) => v
         <dt>Creado</dt><dd>{fechaHora(l.creadoEn)} · {l.creadoPor.nombre}</dd>
         {l.observaciones && (<><dt>Observaciones</dt><dd>{l.observaciones}</dd></>)}
       </dl>
+
+      <ListaInspecciones objetivo={{ tipo: 'lote', id: l.id }} />
+      {PUEDE_INSPECCIONAR.includes(rol) && l.estado !== 'ANULADO' && (
+        <button className="primario" onClick={() => ir({ nombre: 'inspeccion', tipo: 'lote', id: l.id, resumen: `lote ${l.codigo}` })}>
+          Inspeccionar calidad
+        </button>
+      )}
 
       {l.existencias.length > 0 && (
         <>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { db } from '../db';
+import { api } from '../api';
 import { EVENTO_COLA, sincronizar } from '../sync';
 import type { Ruta } from '../App';
 
@@ -17,12 +18,22 @@ export default function Inicio({
   const [pendientes, setPendientes] = useState(0);
   const [errores, setErrores] = useState(0);
   const [mensaje, setMensaje] = useState('');
+  const [tareas, setTareas] = useState<number | null>(null);
 
   async function contar() {
     const ops = await db.operaciones.toArray();
     setPendientes(ops.filter((o) => o.estado !== 'ERROR').length);
     setErrores(ops.filter((o) => o.estado === 'ERROR').length);
   }
+
+  // Contador de tareas pendientes (solo con internet).
+  useEffect(() => {
+    if (!navigator.onLine) return;
+    api
+      .get<unknown[]>('/tareas/mias')
+      .then((t) => setTareas(t.length))
+      .catch(() => setTareas(null));
+  }, []);
 
   useEffect(() => {
     contar();
@@ -47,6 +58,10 @@ export default function Inicio({
       )}
       <button className="grande" onClick={() => ir({ nombre: 'escanear' })}>
         Escanear QR
+      </button>
+      <button className="grande" onClick={() => ir({ nombre: 'tareas' })}>
+        Tareas pendientes
+        {tareas !== null && <small>{tareas === 0 ? 'Nada pendiente' : `${tareas} por hacer`}</small>}
       </button>
       <button className="grande" onClick={() => ir({ nombre: 'productores' })}>
         Productores y entregas
