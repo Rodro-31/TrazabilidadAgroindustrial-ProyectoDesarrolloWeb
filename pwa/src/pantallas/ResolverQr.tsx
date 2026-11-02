@@ -2,20 +2,17 @@ import { useEffect, useState } from 'react';
 import { api, ApiError } from '../api';
 import type { Ruta } from '../App';
 
-// Pregunta a la API qué entidad es el QR y abre su detalle.
+// Pregunta a la API qué entidad es el QR (recepción o lote) y abre su detalle.
 export default function ResolverQr({ valor, ir }: { valor: string; ir: (r: Ruta, reemplazar?: boolean) => void }) {
   const [mensaje, setMensaje] = useState('Buscando…');
-  const [lote, setLote] = useState('');
 
   useEffect(() => {
     api
       .get<{ entidadTipo: string; entidadId: string }>(`/qr/${encodeURIComponent(valor)}`)
       .then((r) => {
         if (r.entidadTipo === 'recepcion') ir({ nombre: 'detalle', id: r.entidadId }, true);
-        else {
-          setLote(r.entidadId);
-          setMensaje(`Este QR es de un ${r.entidadTipo}. Esa pantalla aún no está en la app de campo.`);
-        }
+        else if (r.entidadTipo === 'lote') ir({ nombre: 'lote', id: r.entidadId }, true);
+        else setMensaje('Este código QR no corresponde a una recepción ni a un lote.');
       })
       .catch((e: ApiError) =>
         setMensaje(
@@ -33,7 +30,6 @@ export default function ResolverQr({ valor, ir }: { valor: string; ir: (r: Ruta,
   return (
     <section>
       <p role="status">{mensaje}</p>
-      {lote && <small>Id: {lote}</small>}
       <button onClick={() => ir({ nombre: 'escanear' }, true)}>Escanear otro</button>
     </section>
   );

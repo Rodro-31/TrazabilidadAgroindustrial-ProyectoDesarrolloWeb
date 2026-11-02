@@ -48,6 +48,9 @@ export default function Inicio({
       <button className="grande" onClick={() => ir({ nombre: 'escanear' })}>
         Escanear QR
       </button>
+      <button className="grande" onClick={() => ir({ nombre: 'productores' })}>
+        Productores y entregas
+      </button>
       <button className="grande" onClick={() => ir({ nombre: 'historial' })}>
         Mis envíos y comprobantes
         {(pendientes > 0 || errores > 0) && (
