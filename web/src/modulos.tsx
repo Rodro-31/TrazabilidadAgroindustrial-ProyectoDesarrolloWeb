@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import Auditoria from './pantallas/Auditoria';
 import Catalogos from './pantallas/Catalogos';
-import EnConstruccion from './pantallas/EnConstruccion';
 import Lotes from './pantallas/Lotes';
+import Usuarios from './pantallas/Usuarios';
 
 // Cada módulo del menú. Para agregar una pantalla: crear el componente en
 // src/pantallas y sumar una entrada aquí (ver web/LEEME.md). El menú, las rutas y la
@@ -43,7 +43,7 @@ export const MODULOS: Modulo[] = [
     titulo: 'Usuarios',
     descripcion: 'Cuentas y roles',
     roles: ['ADMIN'],
-    pantalla: <EnConstruccion titulo="Usuarios" nota="Falta el módulo de usuarios en la API." />,
+    pantalla: <Usuarios />,
   },
 ];
 

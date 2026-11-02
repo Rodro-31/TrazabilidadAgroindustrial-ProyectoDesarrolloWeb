@@ -17,6 +17,7 @@ import { TokensModule } from './tokens/tokens.module';
 import { RecepcionesModule } from './recepciones/recepciones.module';
 import { AuditoriaModule } from './auditoria/auditoria.module';
 import { ArchivosModule } from './archivos/archivos.module';
+import { UsuariosModule } from './usuarios/usuarios.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { ArchivosModule } from './archivos/archivos.module';
     RecepcionesModule,
     AuditoriaModule,
     ArchivosModule,
+    UsuariosModule,
   ],
   controllers: [HealthController],
   providers: [
