@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Put, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../auditoria/auditar.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 import { ActualizarUsuarioDto } from './dto/actualizar-usuario.dto';
+import { AsignarCentrosDto } from './dto/asignar-centros.dto';
 import { CrearUsuarioDto } from './dto/crear-usuario.dto';
 import { ListarUsuariosDto } from './dto/listar-usuarios.dto';
 import { RestablecerPasswordDto } from './dto/restablecer-password.dto';
@@ -50,6 +51,12 @@ export class UsuariosController {
   @Post(':id/password')
   restablecerPassword(@Param('id', ParseUUIDPipe) id: string, @Body() dto: RestablecerPasswordDto) {
     return this.usuarios.restablecerPassword(id, dto.password);
+  }
+
+  // PUT /api/v1/usuarios/:id/centros  { centroIds: [...] } → reemplaza sus centros de acopio
+  @Put(':id/centros')
+  asignarCentros(@Param('id', ParseUUIDPipe) id: string, @Body() dto: AsignarCentrosDto) {
+    return this.usuarios.asignarCentros(id, dto.centroIds);
   }
 
   // POST /api/v1/usuarios/:id/desbloquear  → levanta el bloqueo por intentos fallidos

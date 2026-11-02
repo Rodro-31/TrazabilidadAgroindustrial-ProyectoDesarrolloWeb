@@ -122,3 +122,8 @@ input.invalido { border-color: var(--error); }
 /* --- Recepciones: galería de fotos --- */
 .galeria { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 12px; }
 .galeria img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 10px; border: 1px solid var(--borde); }
+
+.centros { border: 1px solid var(--borde); border-radius: 8px; padding: 8px 12px; margin: 12px 0; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.centros legend { padding: 0 4px; color: #5b6661; }
+.casilla { display: flex; align-items: center; gap: 6px; font-weight: normal; }
+.casilla input { width: auto; margin: 0; }

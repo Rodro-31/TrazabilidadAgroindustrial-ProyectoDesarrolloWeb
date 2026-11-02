@@ -37,6 +37,11 @@ describe('UsuariosService', () => {
         update: jest.fn().mockImplementation(({ data }) => Promise.resolve({ ...base, ...data })),
       },
       refreshToken: { updateMany: jest.fn().mockResolvedValue({ count: 2 }) },
+      centro: { count: jest.fn().mockResolvedValue(2) },
+      usuarioCentro: {
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+        createMany: jest.fn().mockResolvedValue({ count: 2 }),
+      },
       $transaction: jest.fn().mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
     servicio = new UsuariosService(prisma);
@@ -118,5 +123,36 @@ describe('UsuariosService', () => {
   it('desbloquear limpia intentos y bloqueo', async () => {
     await servicio.desbloquear(ID);
     expect(prisma.usuario.update.mock.calls[0][0].data).toEqual({ intentosFallidos: 0, bloqueadoHasta: null });
+  });
+
+  describe('asignarCentros', () => {
+    const C1 = '33333333-3333-4333-8333-333333333333';
+    const C2 = '44444444-4444-4444-8444-444444444444';
+
+    it('reemplaza la lista completa en una transacción y quita duplicados', async () => {
+      await servicio.asignarCentros(ID, [C1, C2, C1]);
+      expect(prisma.usuarioCentro.deleteMany).toHaveBeenCalledWith({ where: { usuarioId: ID } });
+      expect(prisma.usuarioCentro.createMany).toHaveBeenCalledWith({
+        data: [{ usuarioId: ID, centroId: C1 }, { usuarioId: ID, centroId: C2 }],
+      });
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('lista vacía le quita todos los centros', async () => {
+      await servicio.asignarCentros(ID, []);
+      expect(prisma.centro.count).not.toHaveBeenCalled();
+      expect(prisma.usuarioCentro.createMany).toHaveBeenCalledWith({ data: [] });
+    });
+
+    it('rechaza si algún centro no existe, sin tocar lo asignado', async () => {
+      prisma.centro.count.mockResolvedValue(1);
+      await expect(servicio.asignarCentros(ID, [C1, C2])).rejects.toBeInstanceOf(BadRequestException);
+      expect(prisma.usuarioCentro.deleteMany).not.toHaveBeenCalled();
+    });
+
+    it('404 si el usuario no existe', async () => {
+      prisma.usuario.findUnique.mockResolvedValue(null);
+      await expect(servicio.asignarCentros(ID, [C1])).rejects.toBeInstanceOf(NotFoundException);
+    });
   });
 });

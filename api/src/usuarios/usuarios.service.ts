@@ -16,6 +16,7 @@ const CAMPOS = {
   activo: true,
   bloqueadoHasta: true,
   creadoEn: true,
+  centros: { select: { centro: { select: { id: true, codigo: true, nombre: true } } } },
 } satisfies Prisma.UsuarioSelect;
 
 type UsuarioPublico = Prisma.UsuarioGetPayload<{ select: typeof CAMPOS }>;
@@ -94,6 +95,22 @@ export class UsuariosService {
     });
     await this.revocarSesiones(id);
     return { ok: true };
+  }
+
+  // Centros de acopio donde trabaja el usuario. Reemplaza la lista completa en una sola
+  // transacción; una lista vacía le quita todos.
+  async asignarCentros(id: string, centroIds: string[]): Promise<UsuarioPublico> {
+    await this.obtener(id);
+    const unicos = [...new Set(centroIds)];
+    if (unicos.length) {
+      const existentes = await this.prisma.centro.count({ where: { id: { in: unicos } } });
+      if (existentes !== unicos.length) throw new BadRequestException('Uno o más centros no existen.');
+    }
+    await this.prisma.$transaction([
+      this.prisma.usuarioCentro.deleteMany({ where: { usuarioId: id } }),
+      this.prisma.usuarioCentro.createMany({ data: unicos.map((centroId) => ({ usuarioId: id, centroId })) }),
+    ]);
+    return this.obtener(id);
   }
 
   async desbloquear(id: string): Promise<UsuarioPublico> {

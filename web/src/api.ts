@@ -128,6 +128,7 @@ export const api = {
   get: <T>(ruta: string) => pedir<T>('GET', ruta).then((r) => r.data),
   post: <T>(ruta: string, cuerpo?: unknown) => pedir<T>('POST', ruta, cuerpo),
   patch: <T>(ruta: string, cuerpo: unknown) => pedir<T>('PATCH', ruta, cuerpo).then((r) => r.data),
+  put: <T>(ruta: string, cuerpo: unknown) => pedir<T>('PUT', ruta, cuerpo).then((r) => r.data),
   delete: <T>(ruta: string) => pedir<T>('DELETE', ruta).then((r) => r.data),
 };
 

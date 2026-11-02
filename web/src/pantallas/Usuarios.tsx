@@ -1,5 +1,5 @@
-import { FormEvent, useState } from 'react';
-import { api, ApiError } from '../api';
+import { FormEvent, useEffect, useState } from 'react';
+import { api, ApiError, listarTodo } from '../api';
 import Tabla from '../componentes/Tabla';
 import { usePaginado } from '../hooks/usePaginado';
 
@@ -13,6 +13,13 @@ interface Usuario {
   activo: boolean;
   bloqueadoHasta: string | null;
   creadoEn: string;
+  centros: { centro: Centro }[];
+}
+
+interface Centro {
+  id: string;
+  codigo: string;
+  nombre: string;
 }
 
 type Panel = null | { tipo: 'nuevo' } | { tipo: 'editar'; u: Usuario } | { tipo: 'password'; u: Usuario };
@@ -103,6 +110,10 @@ function Lista({
         { titulo: 'Correo', celda: (u) => u.email },
         { titulo: 'Rol', celda: (u) => u.rol },
         {
+          titulo: 'Centros',
+          celda: (u) => (u.centros?.length ? u.centros.map((c) => c.centro.codigo).join(', ') : <span className="nota">Ninguno</span>),
+        },
+        {
           titulo: 'Estado',
           celda: (u) => (
             <>
@@ -188,9 +199,23 @@ function FormEditar({ u, alCancelar, alTerminar }: FormProps & { u: Usuario }) {
   const [nombre, setNombre] = useState(u.nombre);
   const [rol, setRol] = useState(u.rol);
   const [activo, setActivo] = useState(u.activo);
+  const asignadosAntes = (u.centros ?? []).map((c) => c.centro.id);
+  const [centrosSel, setCentrosSel] = useState<string[]>(asignadosAntes);
+  const [centros, setCentros] = useState<Centro[] | null>(null);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const cierraSesiones = rol !== u.rol || (u.activo && !activo);
+
+  useEffect(() => {
+    listarTodo<Centro>('/centros?activo=true')
+      .then(setCentros)
+      .catch(() => setCentros([]));
+  }, []);
+
+  const alternar = (id: string) =>
+    setCentrosSel((sel) => (sel.includes(id) ? sel.filter((x) => x !== id) : [...sel, id]));
+  const centrosCambiaron =
+    centrosSel.length !== asignadosAntes.length || centrosSel.some((id) => !asignadosAntes.includes(id));
 
   async function enviar(e: FormEvent) {
     e.preventDefault();
@@ -198,6 +223,7 @@ function FormEditar({ u, alCancelar, alTerminar }: FormProps & { u: Usuario }) {
     setEnviando(true);
     try {
       await api.patch(`/usuarios/${u.id}`, { nombre: nombre.trim(), rol, activo });
+      if (centrosCambiaron) await api.put(`/usuarios/${u.id}/centros`, { centroIds: centrosSel });
       alTerminar(`Usuario ${nombre.trim()} actualizado.`);
     } catch (err) {
       setError(mensaje(err));
@@ -220,6 +246,21 @@ function FormEditar({ u, alCancelar, alTerminar }: FormProps & { u: Usuario }) {
           </select>
         </label>
       </div>
+      <fieldset className="centros">
+        <legend>Centros de acopio donde trabaja</legend>
+        {centros === null && <p className="nota">Cargando centros…</p>}
+        {centros?.length === 0 && <p className="nota">No hay centros activos.</p>}
+        {[
+          ...(centros ?? []),
+          // Un centro desactivado que ya tenía asignado sigue visible para poder quitárselo.
+          ...(u.centros ?? []).map((c) => c.centro).filter((c) => centros && !centros.some((x) => x.id === c.id)),
+        ].map((c) => (
+          <label key={c.id} className="casilla">
+            <input type="checkbox" checked={centrosSel.includes(c.id)} onChange={() => alternar(c.id)} />
+            {c.codigo} · {c.nombre}
+          </label>
+        ))}
+      </fieldset>
       {cierraSesiones && <p className="nota">Al guardar se cerrarán las sesiones abiertas de este usuario.</p>}
       {error && <p className="error" role="alert">{error}</p>}
       <div className="acciones">
