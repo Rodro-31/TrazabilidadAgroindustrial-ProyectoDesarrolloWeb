@@ -14,6 +14,8 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+    volumes:
+      - uploads:/app/uploads  # fotos de recepciones (sobreviven a los redeploys)
 
   web:
     image: ghcr.io/rodro-31/trazabilidad-web:latest
@@ -41,5 +43,6 @@ services:
 
 volumes:
   pgdata:
+  uploads:
   caddy_data:
   caddy_config:

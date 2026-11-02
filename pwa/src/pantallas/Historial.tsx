@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { db, type Comprobante as ComprobanteLocal, type OperacionPendiente } from '../db';
-import { descartar, EVENTO_COLA, reintentar, sincronizar } from '../sync';
+import { db, type Comprobante as ComprobanteLocal, type FotoPendiente, type OperacionPendiente } from '../db';
+import { descartar, descartarFoto, EVENTO_COLA, reintentar, reintentarFoto, sincronizar } from '../sync';
 import { fechaHora } from '../util';
 import Comprobante from './Comprobante';
 import type { Ruta } from '../App';
@@ -11,9 +11,11 @@ export default function Historial({ ir }: { ir: (r: Ruta) => void }) {
   const [ops, setOps] = useState<OperacionPendiente[]>([]);
   const [comprobantes, setComprobantes] = useState<ComprobanteLocal[]>([]);
   const [abierto, setAbierto] = useState('');
+  const [fotos, setFotos] = useState<FotoPendiente[]>([]);
 
   async function cargar() {
     setOps(await db.operaciones.orderBy('creadoEn').reverse().toArray());
+    setFotos(await db.fotos.orderBy('creadoEn').reverse().toArray());
     setComprobantes(await db.comprobantes.orderBy('creadoEn').reverse().limit(50).toArray());
   }
 
@@ -50,6 +52,33 @@ export default function Historial({ ir }: { ir: (r: Ruta) => void }) {
           </li>
         ))}
       </ul>
+
+      {fotos.length > 0 && (
+        <>
+          <h2>Fotos por enviar</h2>
+          <ul className="lista">
+            {fotos.map((f) => (
+              <li key={f.id} className={f.estado === 'ERROR' ? 'item error-item' : 'item'}>
+                <strong>{f.estado === 'ERROR' ? 'Con error' : 'Por enviar'}</strong>
+                <small>{fechaHora(f.creadoEn)}</small>
+                {f.error && <small className="error">{f.error}</small>}
+                {f.estado === 'ERROR' && (
+                  <div className="fila">
+                    <button onClick={() => reintentarFoto(f.id)}>Reintentar</button>
+                    <button
+                      onClick={() => {
+                        if (confirm('¿Descartar esta foto? No se enviará.')) void descartarFoto(f.id);
+                      }}
+                    >
+                      Descartar
+                    </button>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <h2>Comprobantes enviados</h2>
       {comprobantes.length === 0 && <p className="nota">Aquí aparecerán los QR de tus recepciones ya enviadas.</p>}
