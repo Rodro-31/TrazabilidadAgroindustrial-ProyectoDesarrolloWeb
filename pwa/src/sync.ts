@@ -1,4 +1,4 @@
-import { api, ApiError, leerSesion } from './api';
+import { api, ApiError, leerSesion, subir } from './api';
 import { db } from './db';
 
 export const EVENTO_COLA = 'cola-cambio';
@@ -50,11 +50,45 @@ export async function sincronizar(): Promise<{ enviadas: number; conError: numbe
         break;
       }
     }
+    await enviarFotos();
   } finally {
     enCurso = false;
     avisar();
   }
   return resultado;
+}
+
+// Las fotos salen después de su recepción: solo se suben las que ya no tienen la recepción
+// esperando en la cola (es decir, ya existe en el servidor).
+async function enviarFotos() {
+  const fotos = await db.fotos.where('estado').equals('PENDIENTE').sortBy('creadoEn');
+  for (const f of fotos) {
+    if (await db.operaciones.get(f.recepcionId)) continue; // su recepción aún no se ha enviado
+    try {
+      const form = new FormData();
+      form.append('archivo', f.blob, 'foto.jpg');
+      await subir(`/recepciones/${f.recepcionId}/fotos`, form);
+      await db.fotos.delete(f.id);
+    } catch (e) {
+      const err = e as ApiError;
+      if (err instanceof ApiError && !err.esDeRed && err.status !== 401) {
+        await db.fotos.update(f.id, { estado: 'ERROR', error: err.message, intentos: f.intentos + 1 });
+        continue;
+      }
+      break; // sin red / servidor caído / sesión vencida: se reintenta luego
+    }
+  }
+}
+
+export async function reintentarFoto(id: string) {
+  await db.fotos.update(id, { estado: 'PENDIENTE', error: undefined });
+  avisar();
+  return sincronizar();
+}
+
+export async function descartarFoto(id: string) {
+  await db.fotos.delete(id);
+  avisar();
 }
 
 export async function reintentar(id: string) {

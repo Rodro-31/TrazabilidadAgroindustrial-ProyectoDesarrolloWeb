@@ -2,7 +2,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { db } from '../db';
 import type { Catalogos } from '../catalogos';
 import { sincronizar } from '../sync';
-import { kg, numero, tieneMaxDosDecimales, uuid } from '../util';
+import { comprimirImagen, kg, numero, tieneMaxDosDecimales, uuid } from '../util';
 
 const ESTADOS = [
   { valor: 'UVA', texto: 'Uva (fresco)' },
@@ -36,6 +36,8 @@ export default function NuevaRecepcion({ catalogos, alGuardar }: { catalogos: Ca
   const [observaciones, setObservaciones] = useState('');
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
+  const [foto, setFoto] = useState<Blob | null>(null);
+  const [vistaFoto, setVistaFoto] = useState('');
 
   const productores = useMemo(() => {
     const f = filtro.trim().toLowerCase();
@@ -43,6 +45,25 @@ export default function NuevaRecepcion({ catalogos, alGuardar }: { catalogos: Ca
       ? catalogos.productores.filter((p) => `${p.codigo} ${p.nombre}`.toLowerCase().includes(f))
       : catalogos.productores;
   }, [catalogos.productores, filtro]);
+
+  async function elegirFoto(archivo: File | undefined) {
+    if (!archivo) return;
+    try {
+      const blob = await comprimirImagen(archivo);
+      if (vistaFoto) URL.revokeObjectURL(vistaFoto);
+      setFoto(blob);
+      setVistaFoto(URL.createObjectURL(blob));
+      setError('');
+    } catch {
+      setError('No se pudo leer esa imagen. Prueba con otra foto.');
+    }
+  }
+
+  function quitarFoto() {
+    if (vistaFoto) URL.revokeObjectURL(vistaFoto);
+    setFoto(null);
+    setVistaFoto('');
+  }
 
   const fincas = catalogos.fincas.filter((f) => f.productor.id === productorId);
 
@@ -94,6 +115,16 @@ export default function NuevaRecepcion({ catalogos, alGuardar }: { catalogos: Ca
         intentos: 0,
         creadoEn: new Date().toISOString(),
       });
+      if (foto) {
+        await db.fotos.put({
+          id: uuid(),
+          recepcionId: id,
+          blob: foto,
+          estado: 'PENDIENTE',
+          intentos: 0,
+          creadoEn: new Date().toISOString(),
+        });
+      }
       try {
         localStorage.setItem(ULTIMO_CENTRO, centroId);
       } catch {
@@ -181,6 +212,19 @@ export default function NuevaRecepcion({ catalogos, alGuardar }: { catalogos: Ca
         Observaciones (opcional)
         <textarea rows={3} maxLength={1000} value={observaciones} onChange={(e) => setObservaciones(e.target.value)} />
       </label>
+
+      <div className="foto-captura">
+        <label>
+          Foto de la recepción (opcional)
+          <input type="file" accept="image/*" capture="environment" onChange={(e) => void elegirFoto(e.target.files?.[0])} />
+        </label>
+        {vistaFoto && (
+          <div className="foto-vista">
+            <img src={vistaFoto} alt="Vista previa de la foto" />
+            <button type="button" onClick={quitarFoto}>Quitar foto</button>
+          </div>
+        )}
+      </div>
 
       {error && <p className="error" role="alert">{error}</p>}
       <button className="primario grande" disabled={guardando}>

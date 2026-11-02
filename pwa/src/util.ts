@@ -30,3 +30,18 @@ export function valorDeQr(texto: string): string {
   const i = t.lastIndexOf('/q/');
   return i >= 0 ? t.slice(i + 3).split(/[?#]/)[0] : t;
 }
+
+// Reduce la foto antes de guardarla/enviarla: máx. 1600 px por lado, JPEG calidad 0.8.
+// Una foto de celular (4-8 MB) queda en ~200-500 KB, cabe en el límite de 5 MB y gasta menos datos.
+export async function comprimirImagen(archivo: File, maxLado = 1600, calidad = 0.8): Promise<Blob> {
+  const bmp = await createImageBitmap(archivo);
+  const escala = Math.min(1, maxLado / Math.max(bmp.width, bmp.height));
+  const lienzo = document.createElement('canvas');
+  lienzo.width = Math.round(bmp.width * escala);
+  lienzo.height = Math.round(bmp.height * escala);
+  lienzo.getContext('2d')!.drawImage(bmp, 0, 0, lienzo.width, lienzo.height);
+  bmp.close();
+  return new Promise((ok, fallo) =>
+    lienzo.toBlob((b) => (b ? ok(b) : fallo(new Error('No se pudo procesar la imagen'))), 'image/jpeg', calidad),
+  );
+}

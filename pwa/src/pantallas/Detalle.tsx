@@ -1,6 +1,8 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
-import { fechaHora, kg, numero, tieneMaxDosDecimales } from '../util';
+import { api, ApiError, descargarBlob } from '../api';
+import { db } from '../db';
+import { sincronizar } from '../sync';
+import { comprimirImagen, fechaHora, kg, numero, tieneMaxDosDecimales, uuid } from '../util';
 import Comprobante from './Comprobante';
 
 interface Pesaje {
@@ -29,6 +31,10 @@ interface Recepcion {
 }
 
 const PUEDE_PESAR = ['ADMIN', 'SUPERVISOR', 'BASCULA'];
+const PUEDE_FOTO = ['ADMIN', 'SUPERVISOR', 'BASCULA', 'CAMPO'];
+const MAX_FOTOS = 5;
+
+interface FotoInfo { id: string }
 
 export default function Detalle({ id, rol }: { id: string; rol: string }) {
   const [r, setR] = useState<Recepcion | null>(null);
@@ -38,6 +44,8 @@ export default function Detalle({ id, rol }: { id: string; rol: string }) {
   const [tara, setTara] = useState('');
   const [motivo, setMotivo] = useState('');
   const [msg, setMsg] = useState('');
+  const [fotos, setFotos] = useState<{ id: string; url: string }[]>([]);
+  const [msgFoto, setMsgFoto] = useState('');
 
   const cargar = () =>
     api
@@ -47,9 +55,43 @@ export default function Detalle({ id, rol }: { id: string; rol: string }) {
         setError(e.status === 0 ? 'Sin conexión: el detalle se consulta con internet.' : e.message),
       );
 
+  async function cargarFotos() {
+    try {
+      const lista = await api.get<FotoInfo[]>(`/recepciones/${id}/fotos`);
+      const con = await Promise.all(
+        lista.map(async (f) => ({ id: f.id, url: URL.createObjectURL(await descargarBlob(`/archivos/${f.id}`)) })),
+      );
+      setFotos((antes) => {
+        antes.forEach((f) => URL.revokeObjectURL(f.url));
+        return con;
+      });
+    } catch {
+      /* sin conexión o sin fotos: el resto del detalle sigue funcionando */
+    }
+  }
+
   useEffect(() => {
     cargar();
+    void cargarFotos();
+    return () => setFotos((antes) => {
+      antes.forEach((f) => URL.revokeObjectURL(f.url));
+      return [];
+    });
   }, [id]);
+
+  async function agregarFoto(archivo: File | undefined) {
+    if (!archivo) return;
+    setMsgFoto('');
+    try {
+      const blob = await comprimirImagen(archivo);
+      await db.fotos.put({ id: uuid(), recepcionId: id, blob, estado: 'PENDIENTE', intentos: 0, creadoEn: new Date().toISOString() });
+      setMsgFoto('Foto guardada: se envía sola cuando haya internet.');
+      await sincronizar();
+      await cargarFotos();
+    } catch {
+      setMsgFoto('No se pudo procesar la imagen. Prueba con otra.');
+    }
+  }
 
   async function repesar(e: FormEvent) {
     e.preventDefault();
@@ -103,6 +145,23 @@ export default function Detalle({ id, rol }: { id: string; rol: string }) {
         <dt>Registró</dt><dd>{r.registradoPor.nombre}</dd>
         {r.observaciones && (<><dt>Observaciones</dt><dd>{r.observaciones}</dd></>)}
       </dl>
+
+      <h3>Fotos</h3>
+      {fotos.length === 0 && <p className="nota">Esta recepción no tiene fotos.</p>}
+      <div className="galeria">
+        {fotos.map((f) => (
+          <a key={f.id} href={f.url} target="_blank" rel="noreferrer">
+            <img src={f.url} alt="Foto de la recepción" />
+          </a>
+        ))}
+      </div>
+      {PUEDE_FOTO.includes(rol) && fotos.length < MAX_FOTOS && (
+        <label>
+          Agregar foto
+          <input type="file" accept="image/*" capture="environment" onChange={(e) => { void agregarFoto(e.target.files?.[0]); e.target.value = ''; }} />
+        </label>
+      )}
+      {msgFoto && <p role="status" className="aviso">{msgFoto}</p>}
 
       {r.pesajes.length > 0 && (
         <>

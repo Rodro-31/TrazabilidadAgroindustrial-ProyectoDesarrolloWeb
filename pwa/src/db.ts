@@ -30,10 +30,22 @@ export interface Comprobante {
   creadoEn: string;
 }
 
+// Foto pendiente de subir. Se envía cuando su recepción ya existe en el servidor.
+export interface FotoPendiente {
+  id: string;
+  recepcionId: string;
+  blob: Blob;
+  estado: 'PENDIENTE' | 'ERROR';
+  intentos: number;
+  error?: string;
+  creadoEn: string;
+}
+
 class CampoDB extends Dexie {
   operaciones!: Table<OperacionPendiente, string>;
   catalogos!: Table<CatalogoLocal, string>;
   comprobantes!: Table<Comprobante, string>;
+  fotos!: Table<FotoPendiente, string>;
 
   constructor() {
     super('trazabilidad-campo');
@@ -44,6 +56,12 @@ class CampoDB extends Dexie {
       operaciones: 'id, estado, creadoEn',
       catalogos: 'clave',
       comprobantes: 'recepcionId, creadoEn',
+    });
+    this.version(3).stores({
+      operaciones: 'id, estado, creadoEn',
+      catalogos: 'clave',
+      comprobantes: 'recepcionId, creadoEn',
+      fotos: 'id, recepcionId, estado, creadoEn',
     });
   }
 }
