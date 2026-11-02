@@ -4,6 +4,7 @@ import Calidad from './pantallas/Calidad';
 import Catalogos from './pantallas/Catalogos';
 import Lotes from './pantallas/Lotes';
 import Liquidaciones from './pantallas/Liquidaciones';
+import Precios from './pantallas/Precios';
 import Procesos from './pantallas/Procesos';
 import Traslados from './pantallas/Traslados';
 import Recepciones from './pantallas/Recepciones';
@@ -74,6 +75,14 @@ export const MODULOS: Modulo[] = [
     // Montos de dinero: solo quien los gestiona o audita.
     roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'],
     pantalla: <Liquidaciones />,
+  },
+  {
+    ruta: 'precios',
+    titulo: 'Precios',
+    descripcion: 'Precio por kg según producto y grado, con historial',
+    // Montos de dinero: los gestionan ADMIN y SUPERVISOR; AUDITOR consulta.
+    roles: ['ADMIN', 'SUPERVISOR', 'AUDITOR'],
+    pantalla: <Precios />,
   },
   {
     ruta: 'recepciones',
