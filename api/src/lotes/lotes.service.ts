@@ -226,18 +226,9 @@ export class LotesService {
             origenes.push({ recepcionId: item.recepcionId, cantidadKg: cantidad });
           }
 
-          // 4. Código legible y correlativo por año: L-2026-00001.
-          //    El candado de transacción (advisory lock) evita que dos lotes creados al
-          //    mismo tiempo calculen el mismo número. Se libera solo al hacer COMMIT.
+          // 4. Código legible y correlativo por año: L-2026-00001 (ver siguienteCodigo).
           const cosecha = dto.cosecha ?? new Date().getFullYear();
-          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('lote_codigo'))`;
-          const ultimo = await tx.lote.findFirst({
-            where: { codigo: { startsWith: `L-${cosecha}-` } },
-            orderBy: { codigo: 'desc' },
-            select: { codigo: true },
-          });
-          const siguiente = ultimo ? Number(ultimo.codigo.split('-')[2]) + 1 : 1;
-          const codigo = `L-${cosecha}-${String(siguiente).padStart(5, '0')}`;
+          const codigo = await this.siguienteCodigo(tx, cosecha);
 
           // 5. Crear el lote con su origen, su existencia inicial y su primer estado.
           //    Prisma traduce los "create" anidados a varios INSERT dentro de la misma transacción.
@@ -365,6 +356,20 @@ export class LotesService {
       );
       return { valor: token.valor, url: this.tokens.urlQr(token.valor) };
     });
+  }
+
+  // Código legible y correlativo por año (L-2026-00001). Lo usan también los procesos
+  // para sus lotes hijo. El candado de transacción (advisory lock) evita que dos lotes
+  // creados al mismo tiempo calculen el mismo número; se libera solo al hacer COMMIT.
+  async siguienteCodigo(tx: Prisma.TransactionClient, cosecha: number): Promise<string> {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('lote_codigo'))`;
+    const ultimo = await tx.lote.findFirst({
+      where: { codigo: { startsWith: `L-${cosecha}-` } },
+      orderBy: { codigo: 'desc' },
+      select: { codigo: true },
+    });
+    const siguiente = ultimo ? Number(ultimo.codigo.split('-')[2]) + 1 : 1;
+    return `L-${cosecha}-${String(siguiente).padStart(5, '0')}`;
   }
 
   // Cambia el estado validando la máquina de estados y deja el registro en el historial.
