@@ -12,18 +12,26 @@ Se descartó el uso de proveedores externos (como Auth0) para implementar un con
 
 ## 2. Roles del Sistema
 
-El acceso a los distintos módulos (Web y PWA) está protegido mediante *guards* en el backend que validan los permisos según el rol del usuario autenticado:
+El acceso a los distintos módulos (Web y PWA) está protegido mediante *guards* en el backend que validan los permisos según el rol del usuario autenticado. La web oculta los botones que un rol no puede usar, pero el permiso real lo valida siempre la API.
 
 | Rol | Nivel de Acceso y Funciones |
 |---|---|
-| **Administrador** | Acceso total al sistema, incluyendo la gestión de usuarios, roles y configuración de catálogos. |
-| **Supervisor** | Autoriza operaciones críticas: aprueba traslados entre centros, procesos de transformación y liquidaciones. |
-| **Calidad** | Gestiona inspecciones de producto y determina los grados de clasificación (uva, pergamino, oro). |
-| **Báscula / Bodega** | Realiza pesajes, recepciones, gestión de bodega e impresión de comprobantes y etiquetas. |
-| **Campo** | Usuario exclusivo de la PWA: registra recepciones en fincas, captura fotos, escanea QR y realiza inspecciones preliminares. |
-| **Auditor** | Acceso de solo lectura a todo el sistema, enfocado en revisar el historial y los logs de auditoría. |
+| **Administrador** | Acceso total al sistema, incluyendo la gestión de usuarios, roles, centros de acopio y registro de pagos. |
+| **Supervisor** | Registra y gestiona la operación: despacha y cancela traslados, registra procesos, crea y aprueba liquidaciones, administra productores, fincas, organizaciones, compradores y precios, y puede ver el DPI de los productores. Los traslados y los procesos no requieren aprobación: se registran o se despachan directamente. Solo las liquidaciones se aprueban. |
+| **Calidad** | Registra inspecciones (en la web y en la PWA) y gestiona el catálogo de grados de calidad (por ejemplo, Primera). Consulta recepciones, lotes, traslados y procesos. |
+| **Báscula / Bodega** | Realiza pesajes y recepciones, crea lotes, despacha y recibe traslados, e imprime comprobantes y etiquetas. |
+| **Campo** | Usuario de la PWA: registra recepciones en fincas, captura fotos y escanea QR. No registra inspecciones. |
+| **Auditor** | Acceso de solo lectura a todos los módulos, incluida la auditoría, salvo la gestión de usuarios. |
 
-## 3. Gestión de Tokens y Códigos QR
+## 3. Segregación de Funciones
+
+Las operaciones que mueven dinero tienen controles adicionales:
+
+*   **Quien crea una liquidación no puede aprobarla:** si el mismo usuario intenta aprobarla, la API responde **403** ("Quien creó la liquidación no puede aprobarla: debe hacerlo otra persona"). La aprobación la hace otro Administrador o Supervisor.
+*   **Solo el Administrador registra el pago** de una liquidación aprobada; el Supervisor recibe **403**.
+*   **Anular un lote** y **cancelar un traslado** están reservados a Administrador y Supervisor, y exigen un motivo que queda en el historial.
+
+## 4. Gestión de Tokens y Códigos QR
 
 El sistema utiliza tokens de un solo uso o con expiración estricta para garantizar la seguridad de operaciones periféricas:
 *   **QR de Recepción y Lotes:** Los códigos QR generados no exponen datos sensibles en texto plano. Contienen un valor aleatorio cuyo *hash* se verifica contra la base de datos. Estos QR no expiran (identifican al lote o recepción), pero pueden revocarse.
@@ -31,7 +39,12 @@ El sistema utiliza tokens de un solo uso o con expiración estricta para garanti
 *   **Recuperación de Contraseña:** Genera un token de un solo uso con una ventana de expiración máxima de 30 minutos. Generar un enlace nuevo invalida el anterior, y al restablecer la contraseña se cierran las sesiones abiertas y se levanta cualquier bloqueo.
 *   *Nota:* Toda validación de token responde un estado claro (válido / expirado / usado / revocado) y deja un registro en auditoría.
 
-## 4. Auditoría de Operaciones Sensibles (Regla 6)
+## 5. Protección de Datos Sensibles
+
+*   **DPI del productor:** solo lo ven el Administrador y el Supervisor, y únicamente en el detalle del productor. No aparece en las listas, en los QR ni en los datos de las recepciones. En la auditoría se guarda como `[OCULTO]`.
+*   **Reportes CSV:** los archivos exportados se protegen contra la inyección de fórmulas. Si un texto empieza con `=`, `+`, `-` o `@` (o con tabulador o retorno de carro), se le antepone un apóstrofo (`'`) para que Excel lo trate como texto y no ejecute una fórmula.
+
+## 6. Auditoría de Operaciones Sensibles (Regla 6)
 
 Para cumplir con la trazabilidad inmutable, el backend cuenta con un **Interceptor Global de Auditoría**. Cada petición de escritura (`POST`, `PUT`, `PATCH`, `DELETE`) en endpoints sensibles captura automáticamente:
 *   ID y rol del usuario responsable.
@@ -41,7 +54,7 @@ Para cumplir con la trazabilidad inmutable, el backend cuenta con un **Intercept
 
 Los campos sensibles (contraseñas, tokens, QR, DPI) se guardan como `[OCULTO]`. Las rutas `/auth` se excluyen del interceptor porque el servicio de autenticación audita sus propios eventos (inicio de sesión exitoso y fallido, bloqueo, recuperación de contraseña). Si el registro de auditoría falla, la respuesta al cliente no se rompe y el error queda en los logs de la API.
 
-## 5. Infraestructura y Protección de Secretos
+## 7. Infraestructura y Protección de Secretos
 
 *   **Comunicaciones Seguras (HTTPS):** Caddy actúa como proxy inverso gestionando automáticamente los certificados TLS a través de Let's Encrypt para todas las aplicaciones (API, Web, PWA).
 *   **Gestión de Secretos:** Las claves de base de datos, las firmas JWT y las credenciales de correo se inyectan a través de variables de entorno (`.env`). Nunca se exponen en el repositorio ni en las imágenes de Docker.
