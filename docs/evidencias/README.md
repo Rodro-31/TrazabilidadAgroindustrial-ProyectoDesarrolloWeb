@@ -19,7 +19,7 @@ Usuarios de demostración: `admin@`, `supervisor@`, `calidad@`, `bascula@`, `cam
 |---|---|---|
 | 01 | ![HTTPS](01-https-candado.png) | El panel se sirve por **HTTPS** con certificado válido (Caddy + Let's Encrypt). |
 | 02 | ![Health](02-health.png) | La API en producción responde `GET /api/v1/health` con `{"estado":"ok"}`. |
-| 03 | ![Swagger](03-swagger.png) | Documentación automática de la API con **Swagger/OpenAPI** (incluye auth, recuperación de contraseña, recepciones, calidad, tareas, lotes…). |
+| 03 | ![Swagger](03-swagger.png) | Documentación automática de la API con **Swagger/OpenAPI**: cada endpoint tiene su descripción (qué hace, qué roles lo usan y sus reglas principales). |
 | 04 | ![Pipeline](04-actions-pipeline.png) | **Pipeline CI/CD** en GitHub Actions: `test → build-push → deploy`, en verde, disparado por el merge a `main`. |
 | 05 | ![Pruebas](05-actions-tests.png) | Las **pruebas automatizadas** corren en el pipeline: 11 suites, **86 pruebas** aprobadas. Si fallan, no se construye ni se despliega. |
 | 06 | ![Registry](06-registry-packages.png) | **Registry de contenedores** (GitHub Container Registry): imágenes `trazabilidad-api`, `trazabilidad-web` y `trazabilidad-pwa`. |
