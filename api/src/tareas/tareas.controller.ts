@@ -1,5 +1,5 @@
 import { Controller, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../auditoria/auditar.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 import { TareasService, type UsuarioJwt } from './tareas.service';
@@ -14,6 +14,7 @@ export class TareasController {
 
   // GET /api/v1/tareas/mias → pendientes del usuario, de su rol y de sus centros
   @Get('mias')
+  @ApiOperation({ summary: 'Tareas pendientes del usuario: las suyas y las de su rol en sus centros (ADMIN y SUPERVISOR ven todas).' })
   mias(@UsuarioActual() usuario: UsuarioJwt) {
     return this.tareas.mias(usuario);
   }
@@ -21,6 +22,7 @@ export class TareasController {
   // POST /api/v1/tareas/:id/completar
   @HttpCode(200)
   @Post(':id/completar')
+  @ApiOperation({ summary: 'Marca como completada una tarea visible para el usuario (la de inspección se cierra al registrar la inspección).' })
   completar(@Param('id', ParseUUIDPipe) id: string, @UsuarioActual() usuario: UsuarioJwt) {
     return this.tareas.completar(id, usuario);
   }
