@@ -20,16 +20,16 @@ Este guion está estructurado para cubrir estrictamente los 8 puntos evaluables 
 *   **Víctor (Compartiendo pantalla del móvil):** "Aquí tengo la PWA instalada en mi teléfono (ícono en pantalla de inicio). Voy a activar el 'Modo Avión'."
 *   **Víctor:** "Registro una nueva entrega de cardamomo en la finca. Tomo una foto desde la cámara. Al guardar, el sistema detecta que no hay red y lo deja 'Por enviar' usando IndexedDB."
 *   **Víctor:** "Quito el 'Modo Avión'. La PWA sincroniza automáticamente el registro y la foto al servidor."
-*   **Integrante 2 (En la web como Báscula):** "Confirmando la persistencia real, aquí en el panel web de Recepciones ya puedo ver la entrega de Víctor de hace un segundo, con su foto almacenada en el servidor (volumen persistente de Docker)."
+*   **Rodrigo (En la web como Báscula):** "Confirmando la persistencia real, aquí en el panel web de Recepciones ya puedo ver la entrega de Víctor de hace un segundo, con su foto almacenada en el servidor (volumen persistente de Docker)."
 
-## 4. Trazabilidad: Calidad, Traslado y Procesos - [Rodrigo]
-*   **Integrante 2 (Web - Módulos de Calidad y Lotes):** "Con la recepción lista, el rol de Calidad registra su inspección (grado Primera). A partir de esta entrega, formamos un nuevo Lote. El sistema genera un código QR sin exponer datos, validable mediante su hash."
-*   **Integrante 2:** "Este lote luego puede ser mezclado o dividido en la sección de 'Procesos'. El sistema controla las existencias mediante reglas transaccionales estrictas que evitan sobregiros."
-*   **Integrante 2 (Pantalla de Trazabilidad):** "Finalmente, este árbol recursivo nos permite ver que el lote final de producto limpio provino exactamente de la finca y productor que Víctor registró en su teléfono hace unos minutos."
+## 4. Trazabilidad: Calidad, Lotes y Procesos - [Rodrigo]
+*   **Rodrigo (Web - Módulos de Calidad y Lotes):** "Con la recepción lista, el rol de Calidad registra su inspección (grado Primera). A partir de esta entrega, formamos un nuevo Lote. El sistema genera un código QR sin exponer datos, validable mediante su hash."
+*   **Rodrigo:** "En la sección de 'Procesos' dividimos este lote de uva en lotes nuevos; el lote de entrada queda agotado. El sistema controla las existencias mediante reglas transaccionales estrictas que evitan sobregiros."
+*   **Rodrigo (Pantalla de Trazabilidad):** "Finalmente, este árbol recursivo nos permite ver que el lote que resultó de la división provino exactamente de la finca y productor que Víctor registró en su teléfono hace unos minutos."
 
 ## 5. Auditoría y Logs del Sistema - [Owen]
-*   **Owen (Pantalla de Auditoría Web):** "Para cumplir con la regla de oro de la trazabilidad, cualquier modificación (como el bloqueo de intentos de Víctor o una modificación de peso) es interceptada. Aquí vemos el registro: usuario, acción, IP, fecha y los valores Antes/Después."
-*   **Owen (Consola):** "Y a nivel de servidor, estos son los logs de la API en tiempo real que confirman que el interceptor está capturando correctamente el tráfico."
+*   **Owen (Pantalla de Auditoría Web):** "Para cumplir con la regla de oro de la trazabilidad, toda operación sensible (como el bloqueo de intentos de Víctor o una modificación de peso) queda registrada. La auditoría se consulta en esta pantalla: usuario, acción, IP, fecha y los valores Antes/Después."
+*   **Owen (Consola):** "A nivel de servidor, los logs de la API muestran el arranque del sistema y los errores. Las operaciones de los usuarios no se ven aquí: se consultan en la pantalla de Auditoría."
 
 ## 6. Contenedores, Registry y CI/CD - [Víctor]
 *   **Víctor (Terminal del servidor y GitHub):** "Todo esto opera sobre contenedores. Aquí en el servidor DigitalOcean usamos `docker ps` para ver la API, Web, PWA, Caddy y DB corriendo."
@@ -37,6 +37,6 @@ Este guion está estructurado para cubrir estrictamente los 8 puntos evaluables 
 
 ## 7. Despliegue de un Cambio en Vivo - [Equipo]
 *   **Owen:** "Para finalizar, solicitamos al docente que nos indique un pequeño cambio de texto o color que desee ver en la aplicación."
-*   **Víctor:** *(Realiza el cambio en el código, hace commit y push a main)*.
-*   **Rodrigo:** "Mientras GitHub Actions ejecuta el pipeline de construcción y pruebas, abrimos espacio para sus preguntas."
+*   **Víctor:** *(Realiza el cambio en una rama nueva y abre un Pull Request. La rama `main` está protegida: el cambio se aprueba por un compañero y se hace merge a `main`)*.
+*   **Rodrigo:** "Al integrarse el cambio a `main`, GitHub Actions ejecuta el pipeline de pruebas, construcción y despliegue. Mientras tanto, abrimos espacio para sus preguntas."
 *   **Owen:** *(Al finalizar las preguntas, refresca la página web)* "Como ven, el pipeline ha finalizado y el cambio ya está reflejado en producción de forma automática."
