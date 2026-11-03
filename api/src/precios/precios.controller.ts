@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../auditoria/auditar.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
@@ -19,12 +19,14 @@ export class PreciosController {
   constructor(private readonly precios: PreciosService) {}
 
   // GET /api/v1/precios?vigentes=true&estadoProducto=PERGAMINO
+  @ApiOperation({ summary: 'Listar precios por kg (vigentes hoy o historial)' })
   @Get()
   listar(@Query() filtros: ListarPreciosDto) {
     return this.precios.listar(filtros);
   }
 
   @Roles('ADMIN', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Registrar un precio nuevo: cierra el vigente del mismo producto y grado' })
   @Post()
   crear(@Body() dto: CrearPrecioDto, @UsuarioActual() usuario: Usuario) {
     return this.precios.crear(dto, usuario.sub);
@@ -32,6 +34,7 @@ export class PreciosController {
 
   @Roles('ADMIN')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Cerrar un precio vigente sin reemplazo (solo ADMIN)' })
   @Post(':id/cerrar')
   cerrar(@Param('id', ParseUUIDPipe) id: string) {
     return this.precios.cerrar(id);

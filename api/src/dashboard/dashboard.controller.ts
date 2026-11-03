@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { DashboardService } from './dashboard.service';
 
@@ -13,6 +13,7 @@ export class DashboardController {
 
   // GET /api/v1/dashboard
   @Roles('ADMIN', 'SUPERVISOR', 'CALIDAD', 'BASCULA', 'AUDITOR')
+  @ApiOperation({ summary: 'Resumen del dashboard con datos reales (existencias, lotes por estado, recepciones por día, procesos y merma)' })
   @Get()
   resumen() {
     return this.dashboard.resumen();

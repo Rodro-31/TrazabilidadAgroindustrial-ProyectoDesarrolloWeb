@@ -11,7 +11,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UsuarioActual } from '../../common/decorators/usuario-actual.decorator';
@@ -35,18 +35,21 @@ export class ProductoresController {
   constructor(private readonly productores: ProductoresService) {}
 
   // GET /api/v1/productores?buscar=juan&pagina=1&limite=20
+  @ApiOperation({ summary: 'Listar productores (búsqueda, filtros y paginación)' })
   @Get()
   listar(@Query() filtros: ListarProductoresDto) {
     return this.productores.listar(filtros);
   }
 
   // GET /api/v1/productores/:id (el DPI solo para ADMIN y SUPERVISOR)
+  @ApiOperation({ summary: 'Detalle de un productor con sus fincas (el DPI solo para ADMIN y SUPERVISOR)' })
   @Get(':id')
   obtener(@Param('id', ParseUUIDPipe) id: string, @UsuarioActual() usuario: Usuario) {
     return this.productores.obtener(id, ROLES_DPI.includes(usuario.rol));
   }
 
   // GET /api/v1/productores/:id/recepciones?limite=10
+  @ApiOperation({ summary: 'Entregas recientes de un productor' })
   @Get(':id/recepciones')
   recepciones(
     @Param('id', ParseUUIDPipe) id: string,
@@ -56,12 +59,14 @@ export class ProductoresController {
   }
 
   @Roles('ADMIN', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Crear un productor' })
   @Post()
   crear(@Body() dto: CrearProductorDto) {
     return this.productores.crear(dto);
   }
 
   @Roles('ADMIN', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Editar un productor' })
   @Patch(':id')
   actualizar(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ActualizarProductorDto) {
     return this.productores.actualizar(id, dto);
@@ -69,6 +74,7 @@ export class ProductoresController {
 
   // DELETE desactiva (soft delete), no borra el registro.
   @Roles('ADMIN')
+  @ApiOperation({ summary: 'Desactivar un productor (no se borra: conserva su historial)' })
   @Delete(':id')
   desactivar(@Param('id', ParseUUIDPipe) id: string) {
     return this.productores.desactivar(id);

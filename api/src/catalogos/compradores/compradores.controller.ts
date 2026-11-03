@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../../auditoria/auditar.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CompradoresService } from './compradores.service';
@@ -17,24 +17,28 @@ export class CompradoresController {
   constructor(private readonly compradores: CompradoresService) {}
 
   // GET /api/v1/compradores?buscar=spice&pais=Arabia%20Saudita&activo=true
+  @ApiOperation({ summary: 'Listar compradores (búsqueda, filtros y paginación)' })
   @Get()
   listar(@Query() filtros: ListarCompradoresDto) {
     return this.compradores.listar(filtros);
   }
 
   // GET /api/v1/compradores/:id (incluye cuántas ventas tiene)
+  @ApiOperation({ summary: 'Detalle de un comprador' })
   @Get(':id')
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.compradores.obtener(id);
   }
 
   @Roles('ADMIN', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Crear un comprador' })
   @Post()
   crear(@Body() dto: CrearCompradorDto) {
     return this.compradores.crear(dto);
   }
 
   @Roles('ADMIN', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Editar un comprador' })
   @Patch(':id')
   actualizar(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ActualizarCompradorDto) {
     return this.compradores.actualizar(id, dto);
@@ -42,6 +46,7 @@ export class CompradoresController {
 
   // DELETE desactiva (soft delete), no borra el registro.
   @Roles('ADMIN')
+  @ApiOperation({ summary: 'Desactivar un comprador (no se borra: conserva su historial)' })
   @Delete(':id')
   desactivar(@Param('id', ParseUUIDPipe) id: string) {
     return this.compradores.desactivar(id);

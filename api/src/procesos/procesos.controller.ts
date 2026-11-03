@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../auditoria/auditar.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
@@ -19,12 +19,14 @@ export class ProcesosController {
   constructor(private readonly procesos: ProcesosService) {}
 
   // GET /api/v1/procesos?tipo=MEZCLA&centroId=...&loteId=...
+  @ApiOperation({ summary: 'Listar procesos (filtros por tipo, centro y lote)' })
   @Get()
   listar(@Query() filtros: ListarProcesosDto) {
     return this.procesos.listar(filtros);
   }
 
   // GET /api/v1/procesos/:id (con los lotes que entraron y salieron)
+  @ApiOperation({ summary: 'Detalle del proceso: lotes que entraron, lotes que salieron y merma' })
   @Get(':id')
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.procesos.obtener(id);
@@ -32,6 +34,7 @@ export class ProcesosController {
 
   // Responde el proceso y el QR de cada lote nuevo, para imprimir sus etiquetas.
   @Roles('ADMIN', 'SUPERVISOR')
+  @ApiOperation({ summary: 'Registrar un proceso (mezcla, división, secado, limpieza o clasificación): consume lotes y crea lotes nuevos' })
   @Post()
   crear(@Body() dto: CrearProcesoDto, @UsuarioActual() usuario: Usuario) {
     return this.procesos.crear(dto, usuario.sub);

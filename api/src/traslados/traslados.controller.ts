@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Headers, HttpCode, Ip, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auditar } from '../auditoria/auditar.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
@@ -20,11 +20,13 @@ export class TrasladosController {
   constructor(private readonly traslados: TrasladosService) {}
 
   // GET /api/v1/traslados?estado=EN_TRANSITO&centroId=...&loteId=...
+  @ApiOperation({ summary: 'Listar traslados (filtros por estado, lote y centro)' })
   @Get()
   listar(@Query() filtros: ListarTrasladosDto) {
     return this.traslados.listar(filtros);
   }
 
+  @ApiOperation({ summary: 'Detalle de un traslado' })
   @Get(':id')
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.traslados.obtener(id);
@@ -32,6 +34,7 @@ export class TrasladosController {
 
   // Responde el traslado y el código de confirmación (se muestra una sola vez).
   @Roles('ADMIN', 'SUPERVISOR', 'BASCULA')
+  @ApiOperation({ summary: 'Despachar un lote a otro centro: queda en tránsito y se emite un código de confirmación (vence en 72 h)' })
   @Post()
   crear(@Body() dto: CrearTrasladoDto, @UsuarioActual() usuario: Usuario) {
     return this.traslados.crear(dto, usuario.sub);
@@ -39,6 +42,7 @@ export class TrasladosController {
 
   @Roles('ADMIN', 'SUPERVISOR', 'BASCULA')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Recibir el traslado en el centro destino con su código de confirmación (uso único)' })
   @Post(':id/recibir')
   recibir(
     @Param('id', ParseUUIDPipe) id: string,
@@ -52,6 +56,7 @@ export class TrasladosController {
 
   @Roles('ADMIN', 'SUPERVISOR')
   @HttpCode(200)
+  @ApiOperation({ summary: 'Cancelar un traslado en tránsito: el lote vuelve al origen y el código se revoca' })
   @Post(':id/cancelar')
   cancelar(@Param('id', ParseUUIDPipe) id: string, @Body() dto: CancelarTrasladoDto, @UsuarioActual() usuario: Usuario) {
     return this.traslados.cancelar(id, dto.motivo, usuario.sub);
