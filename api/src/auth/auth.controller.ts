@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Headers, HttpCode, Ip, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { Public } from '../common/decorators/public.decorator';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -23,6 +23,7 @@ export class AuthController {
   @HttpCode(200)
   @ApiHeader({ name: 'user-agent', required: false })
   @Post('login')
+  @ApiOperation({ summary: 'Inicia sesión con correo y contraseña. Devuelve access token (15 min) y refresh token (7 días). Tras 5 intentos fallidos la cuenta se bloquea 15 minutos.' })
   login(
     @Body() dto: LoginDto,
     @Ip() ip: string,
@@ -35,6 +36,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @HttpCode(200)
   @Post('refresh')
+  @ApiOperation({ summary: 'Renueva la sesión: el refresh token usado se revoca y se emite uno nuevo. Reusar uno revocado cierra todas las sesiones.' })
   refresh(@Body() dto: RefreshDto) {
     return this.auth.refrescar(dto.refreshToken);
   }
@@ -42,6 +44,7 @@ export class AuthController {
   @Public()
   @HttpCode(204)
   @Post('logout')
+  @ApiOperation({ summary: 'Cierra la sesión revocando el refresh token.' })
   async logout(@Body() dto: RefreshDto) {
     await this.auth.cerrarSesion(dto.refreshToken);
   }
@@ -51,6 +54,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @HttpCode(204)
   @Post('recuperar')
+  @ApiOperation({ summary: 'Solicita un enlace de recuperación por correo (vence en 30 min, un solo uso). Responde 204 exista o no la cuenta.' })
   async recuperar(@Body() dto: SolicitarRecuperacionDto, @Ip() ip: string, @Headers('user-agent') userAgent: string) {
     await this.recuperacion.solicitar(dto.email, { ip, userAgent });
   }
@@ -60,6 +64,7 @@ export class AuthController {
   @UseGuards(ThrottlerGuard)
   @HttpCode(204)
   @Post('restablecer')
+  @ApiOperation({ summary: 'Fija una contraseña nueva con el token del enlace. Levanta el bloqueo y cierra todas las sesiones.' })
   async restablecer(@Body() dto: RestablecerConTokenDto, @Ip() ip: string, @Headers('user-agent') userAgent: string) {
     await this.recuperacion.restablecer(dto.token, dto.password, { ip, userAgent });
   }
@@ -69,6 +74,7 @@ export class AuthController {
   @Roles('ADMIN')
   @HttpCode(200)
   @Post('recuperar/enlace')
+  @ApiOperation({ summary: 'ADMIN: genera el enlace de recuperación de un usuario para entregarlo por otro medio.' })
   enlace(
     @Body() dto: EnlaceRecuperacionDto,
     @UsuarioActual() actor: { sub: string },
@@ -80,6 +86,7 @@ export class AuthController {
 
   @ApiBearerAuth()
   @Get('me')
+  @ApiOperation({ summary: 'Devuelve el id y el rol del usuario de la sesión.' })
   yo(@UsuarioActual() usuario: { sub: string; rol: string }) {
     return { id: usuario.sub, rol: usuario.rol };
   }

@@ -19,11 +19,13 @@ export class CalidadController {
 
   // GET /api/v1/calidad/inspecciones?recepcionId=...&loteId=...&aprobado=true
   @Get()
+  @ApiOperation({ summary: 'Lista inspecciones de calidad, filtrando por recepción, lote o resultado.' })
   listar(@Query() filtros: ListarInspeccionesDto) {
     return this.calidad.listar(filtros);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Detalle de una inspección de calidad.' })
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.calidad.obtener(id);
   }

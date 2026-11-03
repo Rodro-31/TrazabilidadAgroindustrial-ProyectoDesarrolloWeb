@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../common/decorators/roles.decorator';
 import { AuditoriaService } from './auditoria.service';
 import { ListarAuditoriaDto } from './dto/listar-auditoria.dto';
@@ -14,6 +14,7 @@ export class AuditoriaController {
   // GET /api/v1/auditoria?entidad=recepcion&usuarioId=&accion=&desde=&hasta=&pagina=1&limite=20
   @Roles('ADMIN', 'AUDITOR')
   @Get()
+  @ApiOperation({ summary: 'ADMIN y AUDITOR: bitácora de auditoría con filtros por entidad, acción, usuario y fechas. Los campos sensibles salen como [OCULTO].' })
   listar(@Query() filtros: ListarAuditoriaDto) {
     return this.auditoria.listar(filtros);
   }

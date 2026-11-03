@@ -72,7 +72,7 @@ Ejecutadas el 3/11/2026 a la 1:20 a. m. contra la API (NestJS + PostgreSQL) en u
 
 | ID | Regla / Requisito | Pasos | Resultado esperado | Resultado obtenido | Evidencia |
 |---|---|---|---|---|---|
-| **PR-18** | Regla 1: no permitir lotes sin origen | `POST /lotes` sin recepciones de origen | Se rechaza (400) | **ÉXITO:** HTTP 400 "Datos inválidos" | `salida-pruebas-reglas.txt` (R1) |
+| **PR-18** | Regla 1: no permitir lotes sin origen | `POST /lotes` sin recepciones de origen | Se rechaza (400) | **ÉXITO:** HTTP 400 "Datos inválidos" con el detalle "recepciones: un lote debe tener al menos una recepción de origen" | `salida-pruebas-reglas.txt` (R1) |
 | **PR-19** | Regla 2: no mover más de la existencia | Proceso que toma 9 999 kg del lote L-2026-00001 (existencia 418 kg) | Se rechaza (400) | **ÉXITO:** HTTP 400 "El lote L-2026-00001 solo tiene 418.00 kg en este centro" | `salida-pruebas-reglas.txt` (R2) |
 | **PR-20** | Regla 2: no asignar una recepción por encima de sus kg | Crear otro lote con una recepción ya asignada por completo | Se rechaza (409) | **ÉXITO:** HTTP 409 "La recepción … ya fue asignada completamente a otro lote" | `salida-pruebas-reglas.txt` (R2b) |
 | **PR-21** | Regla 3: cada cambio de estado del lote queda registrado | Consultar el historial de estados de L-2026-00001 después de procesarlo | Historial con cada cambio, motivo y usuario | **ÉXITO:** HTTP 200 · (nuevo) → ACTIVO "Creación del lote" · ACTIVO → AGOTADO "Consumido en el proceso PR-2026-0001" | `salida-pruebas-reglas.txt` (R3) |

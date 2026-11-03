@@ -1,5 +1,5 @@
 import { Controller, Get, GoneException, Headers, Ip, NotFoundException, Param } from '@nestjs/common';
-import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UsuarioActual } from '../common/decorators/usuario-actual.decorator';
 import { TokensService } from './tokens.service';
 
@@ -14,6 +14,7 @@ export class QrController {
 
   // GET /api/v1/qr/:valor
   @Get(':valor')
+  @ApiOperation({ summary: 'Resuelve el valor de un QR de recepción o lote y devuelve a qué entidad pertenece. 404 si no existe, 410 si fue revocado. Queda en auditoría.' })
   @ApiHeader({ name: 'user-agent', required: false })
   async resolver(
     @Param('valor') valor: string,

@@ -43,12 +43,14 @@ export class ArchivosController {
 
   // GET /api/v1/recepciones/:id/fotos  → metadatos de las fotos de la recepción
   @Get('recepciones/:id/fotos')
+  @ApiOperation({ summary: 'Lista las fotos de una recepción.' })
   listar(@Param('id', ParseUUIDPipe) id: string) {
     return this.archivos.listarFotosRecepcion(id);
   }
 
   // GET /api/v1/archivos/:id  → la imagen (requiere sesión, por eso el cliente la pide con su token)
   @Get('archivos/:id')
+  @ApiOperation({ summary: 'Descarga un archivo (requiere sesión).' })
   async descargar(@Param('id', ParseUUIDPipe) id: string, @Res() res: Response) {
     const { ruta, mime } = await this.archivos.ubicar(id);
     res.setHeader('Content-Type', mime);

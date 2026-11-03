@@ -21,12 +21,14 @@ export class RecepcionesController {
 
   // GET /api/v1/recepciones?centroId=&productorId=&estadoProducto=&desde=&hasta=&pagina=1&limite=20
   @Get()
+  @ApiOperation({ summary: 'Lista recepciones con filtros (centro, productor, producto, fechas) y paginación.' })
   listar(@Query() filtros: ListarRecepcionesDto) {
     return this.recepciones.listar(filtros);
   }
 
   // GET /api/v1/recepciones/:id
   @Get(':id')
+  @ApiOperation({ summary: 'Detalle de una recepción con su historial de pesajes.' })
   obtener(@Param('id', ParseUUIDPipe) id: string) {
     return this.recepciones.obtener(id);
   }
@@ -49,6 +51,7 @@ export class RecepcionesController {
   // POST /api/v1/recepciones/:id/pesajes
   @Roles('ADMIN', 'SUPERVISOR', 'BASCULA')
   @Post(':id/pesajes')
+  @ApiOperation({ summary: 'Registra un pesaje nuevo; el anterior queda en el historial. 409 si la recepción ya está en un lote o liquidada.' })
   registrarPesaje(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: RegistrarPesajeDto,
