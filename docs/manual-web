@@ -12,8 +12,6 @@ Aplicación web de la plataforma de trazabilidad de cardamomo, pensada para equi
 2. Escribir el correo y la contraseña (mínimo 8 caracteres) y pulsar el botón de ingreso.
 3. Al entrar se muestra **Inicio**, con los módulos que corresponden al rol de la persona. El rol aparece en la parte superior ("Rol: …") y la sesión se cierra con **Cerrar sesión**.
 
-[[PENDIENTE: captura web-01-login.png — pantalla de inicio de sesión de la web]]
-
 **Seguridad del acceso**
 
 - Tras **5 contraseñas incorrectas** la cuenta se bloquea temporalmente (15 minutos). Un administrador puede desbloquearla desde **Usuarios**.
@@ -178,16 +176,11 @@ Un traslado mueve un lote activo de un centro a otro y se confirma con un **cód
 
 El código vence a las **72 horas**, sirve una sola vez y solo funciona para su traslado.
 
-[[PENDIENTE: captura web-10-traslado-despacho.png — código de confirmación mostrado al despachar]]
-[[PENDIENTE: captura web-11-traslado-recibir.png — confirmación de recepción en el destino]]
-
 ## 11. Catálogos
 
 Reúne los datos base: **productores, fincas, centros de acopio, organizaciones, compradores y grados de calidad**. Cada catálogo tiene su lista, búsqueda y formulario de alta o edición; los botones aparecen según el rol (ver sección 2). Los registros no se borran: al eliminarlos se **desactivan** y conservan su historial.
 
 La creación de recepciones requiere que los centros, productores y fincas estén cargados previamente aquí.
-
-[[PENDIENTE: captura web-12-catalogos.png — pantalla de Catálogos]]
 
 ## 12. Precios y liquidaciones
 
@@ -200,9 +193,6 @@ La creación de recepciones requiere que los centros, productores y fincas esté
 3. **Aprobar** (Administrador y Supervisor).
 4. **Registrar pago** (solo Administrador). La versión impresa de la liquidación incluye espacio para la **firma del productor**.
 5. **Anular** (Administrador y Supervisor) mientras no esté pagada.
-
-[[PENDIENTE: captura web-13-precios.png — pantalla de Precios]]
-[[PENDIENTE: captura web-14-liquidacion.png — detalle de una liquidación]]
 
 ## 13. Usuarios (solo Administrador)
 
