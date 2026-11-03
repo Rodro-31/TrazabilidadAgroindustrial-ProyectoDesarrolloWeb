@@ -126,12 +126,11 @@ Solo Administrador y Supervisor, y solo si el lote está activo y no tiene proce
 |---|---|
 | Activo | Disponible en un centro |
 | En tránsito | Despachado a otro centro, pendiente de confirmar |
-| En proceso | Participando en un proceso (secado, limpieza, clasificación) |
 | Agotado | Sin existencia (por ejemplo, tras una división) |
 | Vendido | Vendido |
 | Anulado | Anulado con motivo |
 
-Agotado, Vendido y Anulado son estados finales: un lote no vuelve a activarse. Cada cambio de estado queda en el **Historial de estados**.
+El estado "En proceso" existe en el modelo, pero no se utiliza: los procesos se registran ya terminados, en un solo paso. Agotado, Vendido y Anulado son estados finales: un lote no vuelve a activarse. Cada cambio de estado queda en el **Historial de estados**.
 
 ## 8. Trazabilidad
 
@@ -141,6 +140,8 @@ Desde el detalle de un lote, **Ver trazabilidad** responde de dónde viene y a d
 - **◀ Lotes de los que proviene:** lotes padre, si el lote nació de una mezcla, división o transformación.
 - **Lotes que salieron de este ▶:** lotes derivados.
 - **Ventas ▶:** compradores y destinos, cuando existen ventas registradas.
+
+Con el botón **Certificado PDF** la trazabilidad se imprime o se guarda como PDF, en formato de certificado, sin menús ni botones.
 
 ![Trazabilidad de un lote](evidencias/28-web-trazabilidad.png)
 ![Trazabilidad de un lote derivado](evidencias/28b-web-trazabilidad-derivado.png)
@@ -188,9 +189,9 @@ La creación de recepciones requiere que los centros, productores y fincas esté
 
 **Liquidaciones:** pago a productores por sus recepciones.
 
-1. **Nueva liquidación:** elegir productor y período y pulsar **Vista previa** para ver cada recepción con su precio por kg y su subtotal.
+1. **Nueva liquidación:** elegir productor y período y pulsar **Calcular**. Se muestra una **Vista previa** con cada recepción, su precio por kg y su subtotal.
 2. **Crear borrador** guarda la liquidación.
-3. **Aprobar** (Administrador y Supervisor).
+3. **Aprobar** (Administrador y Supervisor). **La aprobación debe hacerla una persona distinta de quien creó la liquidación** (segregación de funciones): si el mismo usuario intenta aprobarla, el sistema la rechaza con el mensaje "Quien creó la liquidación no puede aprobarla: debe hacerlo otra persona". Al crear una liquidación se genera además una tarea de aprobación.
 4. **Registrar pago** (solo Administrador). La versión impresa de la liquidación incluye espacio para la **firma del productor**.
 5. **Anular** (Administrador y Supervisor) mientras no esté pagada.
 
