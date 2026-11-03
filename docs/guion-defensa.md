@@ -3,7 +3,7 @@
 **Fecha de Presentación:** 3 de noviembre de 2026.
 **Duración Estimada:** 20 - 25 minutos.
 
-Este guion está estructurado para cubrir estrictamente los 8 puntos evaluables del proyecto, asignando un rol claro a cada integrante del equipo (Víctor, Rodrigo y Owen).
+Este guion está estructurado para cubrir los puntos evaluables de la defensa del proyecto, asignando un rol claro a cada integrante del equipo (Víctor, Rodrigo y Owen).
 
 ---
 

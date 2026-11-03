@@ -1,6 +1,6 @@
 # Plan de Pruebas Funcionales y Reglas de Negocio
 
-Este documento recoge las pruebas funcionales aplicadas a la plataforma en el entorno de producción:
+Este documento recoge las pruebas funcionales aplicadas a la plataforma. Las secciones 1 a 6 se ejecutaron en el entorno de producción; la sección 7, contra la API en un entorno local con datos de prueba:
 
 - Aplicación web: https://app.x-dev.store
 - PWA de campo: https://campo.x-dev.store
@@ -66,6 +66,26 @@ Para cada caso se contrasta el resultado esperado frente al obtenido y se indica
 
 ---
 
+## 7. Reglas de negocio obligatorias, traslados y liquidaciones (API)
+
+Ejecutadas el 3/11/2026 a la 1:20 a. m. contra la API (NestJS + PostgreSQL) en un **entorno local con datos de prueba**, con usuarios ADMIN, SUPERVISOR y BASCULA (centro CA-03). Las pruebas llaman directamente a la API, la misma que usan la web y la PWA. Resultado: **13 de 13 con el resultado esperado**. Salida completa: [`evidencias/salida-pruebas-reglas.txt`](evidencias/salida-pruebas-reglas.txt).
+
+| ID | Regla / Requisito | Pasos | Resultado esperado | Resultado obtenido | Evidencia |
+|---|---|---|---|---|---|
+| **PR-18** | Regla 1: no permitir lotes sin origen | `POST /lotes` sin recepciones de origen | Se rechaza (400) | **ÉXITO:** HTTP 400 "Datos inválidos" | `salida-pruebas-reglas.txt` (R1) |
+| **PR-19** | Regla 2: no mover más de la existencia | Proceso que toma 9 999 kg del lote L-2026-00001 (existencia 418 kg) | Se rechaza (400) | **ÉXITO:** HTTP 400 "El lote L-2026-00001 solo tiene 418.00 kg en este centro" | `salida-pruebas-reglas.txt` (R2) |
+| **PR-20** | Regla 2: no asignar una recepción por encima de sus kg | Crear otro lote con una recepción ya asignada por completo | Se rechaza (409) | **ÉXITO:** HTTP 409 "La recepción … ya fue asignada completamente a otro lote" | `salida-pruebas-reglas.txt` (R2b) |
+| **PR-21** | Regla 3: cada cambio de estado del lote queda registrado | Consultar el historial de estados de L-2026-00001 después de procesarlo | Historial con cada cambio, motivo y usuario | **ÉXITO:** HTTP 200 · (nuevo) → ACTIVO "Creación del lote" · ACTIVO → AGOTADO "Consumido en el proceso PR-2026-0001" | `salida-pruebas-reglas.txt` (R3) |
+| **PR-22** | Regla 5: evitar recepciones duplicadas (identificador único) | Enviar dos veces `POST /recepciones` con el mismo UUID; la segunda vez con otro peso | La primera crea (201); la segunda devuelve la existente (200) sin duplicar ni cambiarla | **ÉXITO:** 1.º envío 201 · 2.º envío 200 con neto 118 kg (no 997) · un solo registro con ese id | `salida-pruebas-reglas.txt` (R5) |
+| **PR-23** | Traslado: código ajeno o inventado | Despachar TR-2026-0001 (L-2026-00003, CA-01 → CA-02, 700 kg) y recibir con otro código | Se rechaza (400) | **ÉXITO:** HTTP 400 "El código de confirmación no corresponde a este traslado" | `salida-pruebas-reglas.txt` (T1) |
+| **PR-24** | Traslado: solo recibe el centro destino | Recibir con usuario BASCULA de CA-03 | Se rechaza (403) | **ÉXITO:** HTTP 403 "Solo el personal del centro de destino puede recibir este traslado" | `salida-pruebas-reglas.txt` (T2) |
+| **PR-25** | Traslado: recibir con código válido y merma | Recibir en CA-02 con el código correcto, declarando 697 kg | Traslado RECIBIDO, lote ACTIVO en destino, merma registrada | **ÉXITO:** HTTP 200 · enviado 700 kg · recibido 697 kg (merma 3 kg) · lote ACTIVO | `salida-pruebas-reglas.txt` (T3) |
+| **PR-26** | Traslado: código de un solo uso | Reusar el mismo código | Se rechaza (410) | **ÉXITO:** HTTP 410 "El código de confirmación ya fue usado o fue anulado" | `salida-pruebas-reglas.txt` (T4) |
+| **PR-27** | Liquidación: quien crea no aprueba | SUPERVISOR crea LQ-2026-0001 (418 kg, Q 6 061) e intenta aprobarla | Se rechaza (403) | **ÉXITO:** HTTP 403 "Quien creó la liquidación no puede aprobarla: debe hacerlo otra persona" | `salida-pruebas-reglas.txt` (L1) |
+| **PR-28** | Liquidación: otra persona aprueba | ADMIN aprueba LQ-2026-0001 | Estado APROBADA | **ÉXITO:** HTTP 200 · APROBADA por Administrador | `salida-pruebas-reglas.txt` (L2) |
+| **PR-29** | Liquidación: solo ADMIN registra el pago | SUPERVISOR intenta registrar el pago | Se rechaza (403) | **ÉXITO:** HTTP 403 "No tienes permiso para esta operación" | `salida-pruebas-reglas.txt` (L3) |
+| **PR-30** | Liquidación: pago | ADMIN registra el pago | Estado PAGADA | **ÉXITO:** HTTP 200 · PAGADA | `salida-pruebas-reglas.txt` (L4) |
+
 ## Resumen
 
-Se ejecutaron **17 casos** en el entorno de producción. Los errores o hallazgos se reportan como **Issues** en GitHub con los pasos para reproducirlos.
+Se ejecutaron **30 casos**: 17 en el entorno de producción (PR-01 a PR-17) y 13 sobre reglas de negocio, traslados y liquidaciones (PR-18 a PR-30) contra la API en un entorno local con datos de prueba. **29 con éxito y 1 parcial** (PR-17, documentación de Swagger, reportado como Issue #56). Los errores o hallazgos se reportan como **Issues** en GitHub con los pasos para reproducirlos.

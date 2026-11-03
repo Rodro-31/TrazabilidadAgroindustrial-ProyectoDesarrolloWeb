@@ -1,0 +1,39 @@
+Ejecución: 3/11/2026, 1:20:27 a. m. · API NestJS + PostgreSQL · usuarios: ADMIN, SUPERVISOR y BASCULA (CA-03)
+
+ÉXITO  R1 Regla 1 · crear lote sin recepciones de origen
+       HTTP 400 (esperado 400) · "Datos inválidos"
+ÉXITO  R2 Regla 2 · tomar 9,999 kg del lote L-2026-00001 (existencia 418 kg)
+       HTTP 400 (esperado 400) · "El lote L-2026-00001 solo tiene 418.00 kg en este centro"
+ÉXITO  R2b Regla 2 · asignar a otro lote una recepción ya asignada por completo
+       HTTP 409 (esperado 409) · "La recepción 00000000-0000-4000-8000-000000000101 ya fue asignada completamente a otro lote"
+ÉXITO  R3 Regla 3 · historial de estados del lote L-2026-00001 después de una mezcla
+       HTTP 200 (esperado 200)
+       (nuevo) → ACTIVO · "Creación del lote" · Administrador  |  ACTIVO → AGOTADO · "Consumido en el proceso PR-2026-0001" · Administrador
+ÉXITO  R5 Regla 5 · enviar dos veces la misma recepción (mismo UUID; la 2ª con otro peso)
+       HTTP 200 (esperado 200)
+       1er envío: HTTP 201 (creada) · 2º envío: HTTP 200, devuelve la existente con neto 118 kg (no 997) · registros con ese id: 1
+
+       Despachado TR-2026-0001: L-2026-00003 CA-01 → CA-02, 700 kg, código de 43 caracteres, vence 6/11/2026, 1:20:27 a. m.
+ÉXITO  T1 Traslado · código ajeno o inventado
+       HTTP 400 (esperado 400) · "El código de confirmación no corresponde a este traslado"
+ÉXITO  T2 Traslado · recibir desde un centro que no es el destino (báscula de CA-03)
+       HTTP 403 (esperado 403) · "Solo el personal del centro de destino puede recibir este traslado"
+ÉXITO  T3 Traslado · recibir con el código válido (llegan 3 kg menos)
+       HTTP 200 (esperado 200)
+       estado RECIBIDO · enviado 700 kg · recibido 697 kg (merma en tránsito 3 kg) · lote L-2026-00003 ACTIVO
+ÉXITO  T4 Traslado · reusar el mismo código
+       HTTP 410 (esperado 410) · "El código de confirmación ya fue usado o fue anulado"
+
+       Liquidación LQ-2026-0001 creada por SUPERVISOR: 418 kg, Q6061, estado BORRADOR
+ÉXITO  L1 Liquidación · quien la creó (SUPERVISOR) intenta aprobarla
+       HTTP 403 (esperado 403) · "Quien creó la liquidación no puede aprobarla: debe hacerlo otra persona"
+ÉXITO  L2 Liquidación · otra persona (ADMIN) la aprueba
+       HTTP 200 (esperado 200)
+       estado APROBADA, aprobada por Administrador
+ÉXITO  L3 Liquidación · SUPERVISOR intenta registrar el pago
+       HTTP 403 (esperado 403) · "No tienes permiso para esta operación"
+ÉXITO  L4 Liquidación · ADMIN registra el pago
+       HTTP 200 (esperado 200)
+       estado PAGADA
+
+13/13 pruebas con el resultado esperado
