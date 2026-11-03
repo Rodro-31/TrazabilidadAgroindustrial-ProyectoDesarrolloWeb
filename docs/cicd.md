@@ -6,7 +6,7 @@ El proyecto utiliza GitHub Actions para automatizar el ciclo de vida del softwar
 
 ```mermaid
 graph TD
-    A[Desarrollador] -->|Push / Merge PR| B(GitHub: rama main)
+    A[Desarrollador] -->|Merge de PR aprobado| B(GitHub: rama main)
     B --> C{GitHub Actions}
     C -->|Paso 1| D[Pruebas Automatizadas]
     C -->|Paso 2| E[Build Imágenes Docker]
@@ -15,6 +15,16 @@ graph TD
     G --> H[Conexión SSH]
     H --> I[Docker Compose Pull & Up]
 ```
+
+## Cómo llega un cambio a producción
+
+La rama `main` está protegida: no se hace *push* directo. El recorrido de un cambio es:
+
+1. Se crea una rama nueva (por ejemplo `feat/tema` o `docs/tema`) y se hace *push* de esa rama.
+2. Se abre un **Pull Request** hacia `main`.
+3. Otro integrante del equipo lo revisa y lo **aprueba**.
+4. Se hace **merge** a `main`. Ese merge dispara el pipeline: pruebas → build → push a `ghcr.io` → despliegue por SSH.
+5. En el Droplet, `docker compose pull` y `docker compose up -d` actualizan los contenedores y el cambio queda visible en producción.
 
 ## Detalle de Fases
 Pruebas Automatizadas: Al integrar código, el pipeline instala las dependencias (npm ci) y ejecuta las pruebas unitarias (Jest) del backend. Si las pruebas fallan, el proceso se detiene para proteger el entorno de producción.
