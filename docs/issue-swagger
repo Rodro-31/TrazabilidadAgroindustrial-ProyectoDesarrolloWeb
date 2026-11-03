@@ -1,0 +1,49 @@
+# Issue para GitHub – Swagger: endpoints sin descripción
+
+**Título:** Documentación Swagger: la mayoría de los endpoints no tiene descripción (`@ApiOperation`)
+
+**Etiquetas sugeridas:** `documentación`, `api`
+
+**Descripción**
+
+Al revisar la documentación de la API (https://api.x-dev.store/api/docs) y el código del backend, se encontró que solo 7 de aproximadamente 88 endpoints tienen `@ApiOperation({ summary: ... })`. El resto aparece en Swagger solo con su ruta y método, sin una descripción de lo que hace. La rúbrica del proyecto evalúa la documentación de la API.
+
+**Controladores revisados** (endpoints / con `@ApiOperation`)
+
+| Controlador | Endpoints | Con descripción |
+|---|---|---|
+| auth | 7 | 0 |
+| usuarios | 7 | 0 |
+| lotes | 8 | 0 |
+| liquidaciones | 7 | 0 |
+| traslados | 5 | 0 |
+| procesos | 3 | 0 |
+| precios | 3 | 0 |
+| tareas | 2 | 0 |
+| auditoria | 1 | 0 |
+| dashboard | 1 | 0 |
+| tokens (qr) | 1 | 0 |
+| health | 1 | 0 |
+| catalogos/productores | 6 | 0 |
+| catalogos/fincas | 5 | 0 |
+| catalogos/centros | 5 | 0 |
+| catalogos/organizaciones | 5 | 0 |
+| catalogos/compradores | 5 | 0 |
+| catalogos/grados-calidad | 5 | 0 |
+| recepciones | 5 | 3 |
+| calidad | 3 | 2 |
+| archivos | 3 | 2 |
+
+**Pasos para reproducir**
+
+1. Abrir https://api.x-dev.store/api/docs.
+2. Desplegar cualquier sección de las listadas con 0 (por ejemplo `lotes` o `traslados`).
+3. Observar que los endpoints no muestran un resumen descriptivo.
+
+**Resultado esperado:** cada endpoint tiene un `summary` breve (y, donde aplique, los roles permitidos y los códigos de respuesta).
+
+**Resultado obtenido:** la mayoría solo muestra método y ruta.
+
+**Sugerencia:** agregar `@ApiOperation({ summary: '...' })` (y `@ApiTags`) a cada método de los controladores listados.
+
+> Nota: el conteo se hizo sobre el código fuente (`api/src/**/*.controller.ts`). Antes de publicar el Issue, confirmar visualmente en la URL de Swagger.
