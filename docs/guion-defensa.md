@@ -26,6 +26,7 @@ Este guion está estructurado para cubrir estrictamente los 8 puntos evaluables 
 *   **Rodrigo (Web - Módulos de Calidad y Lotes):** "Con la recepción lista, el rol de Calidad registra su inspección (grado Primera). A partir de esta entrega, formamos un nuevo Lote. El sistema genera un código QR sin exponer datos, validable mediante su hash."
 *   **Rodrigo:** "En la sección de 'Procesos' dividimos este lote de uva en lotes nuevos; el lote de entrada queda agotado. El sistema controla las existencias mediante reglas transaccionales estrictas que evitan sobregiros."
 *   **Rodrigo (Pantalla de Trazabilidad):** "Finalmente, este árbol recursivo nos permite ver que el lote que resultó de la división provino exactamente de la finca y productor que Víctor registró en su teléfono hace unos minutos."
+*   **Rodrigo:** "Además, los lotes se trasladan entre centros con un código que vence en 72 horas y sirve una sola vez, y las liquidaciones a productores las aprueba una persona distinta de quien las crea. Los listados se exportan a Excel y la trazabilidad sale como certificado PDF."
 
 ## 5. Auditoría y Logs del Sistema - [Owen]
 *   **Owen (Pantalla de Auditoría Web):** "Para cumplir con la regla de oro de la trazabilidad, toda operación sensible (como el bloqueo de intentos de Víctor o una modificación de peso) queda registrada. La auditoría se consulta en esta pantalla: usuario, acción, IP, fecha y los valores Antes/Después."
