@@ -20,7 +20,7 @@ Este guion está estructurado para cubrir estrictamente los 8 puntos evaluables 
 *   **Víctor (Compartiendo pantalla del móvil):** "Aquí tengo la PWA instalada en mi teléfono (ícono en pantalla de inicio). Voy a activar el 'Modo Avión'."
 *   **Víctor:** "Registro una nueva entrega de cardamomo en la finca. Tomo una foto desde la cámara. Al guardar, el sistema detecta que no hay red y lo deja 'Por enviar' usando IndexedDB."
 *   **Víctor:** "Quito el 'Modo Avión'. La PWA sincroniza automáticamente el registro y la foto al servidor."
-*   **Integrante 2 (En la web como Báscula):** "Confirmando la persistencia real, aquí en el panel web de Recepciones ya puedo ver la entrega de Víctor de hace un segundo, con su foto almacenada en nuestro servidor S3."
+*   **Integrante 2 (En la web como Báscula):** "Confirmando la persistencia real, aquí en el panel web de Recepciones ya puedo ver la entrega de Víctor de hace un segundo, con su foto almacenada en el servidor (volumen persistente de Docker)."
 
 ## 4. Trazabilidad: Calidad, Traslado y Procesos - [Rodrigo]
 *   **Integrante 2 (Web - Módulos de Calidad y Lotes):** "Con la recepción lista, el rol de Calidad registra su inspección (grado Primera). A partir de esta entrega, formamos un nuevo Lote. El sistema genera un código QR sin exponer datos, validable mediante su hash."
