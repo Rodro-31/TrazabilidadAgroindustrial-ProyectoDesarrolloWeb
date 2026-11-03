@@ -58,7 +58,7 @@ Notas:
 ## 3. Funciones comunes
 
 - **Listas con filtros y paginación:** los listados (recepciones, lotes, calidad, traslados, auditoría…) se filtran por centro, estado, producto, fechas u otros campos.
-- **Exportar:** los listados que lo permiten tienen el botón **Exportar**, que descarga un archivo CSV que se abre en Excel.
+- **Exportar:** los listados que lo permiten tienen el botón **Exportar**, que descarga un archivo CSV que se abre en Excel. Los textos que empiezan con `=`, `+`, `-` o `@` se marcan como texto para evitar la inyección de fórmulas.
 - **Volver:** cada pantalla de detalle tiene el enlace **← Volver a la lista**.
 
 ![Exportación abierta en Excel](evidencias/30-web-exportar-excel.png)
@@ -182,6 +182,8 @@ El código vence a las **72 horas**, sirve una sola vez y solo funciona para su 
 Reúne los datos base: **productores, fincas, centros de acopio, organizaciones, compradores y grados de calidad**. Cada catálogo tiene su lista, búsqueda y formulario de alta o edición; los botones aparecen según el rol (ver sección 2). Los registros no se borran: al eliminarlos se **desactivan** y conservan su historial.
 
 La creación de recepciones requiere que los centros, productores y fincas estén cargados previamente aquí.
+
+**DPI del productor:** es un dato sensible. Solo el Administrador y el Supervisor lo ven, y únicamente en el detalle del productor; no aparece en las listas, en los QR ni en la auditoría (se muestra como `[OCULTO]`).
 
 ## 12. Precios y liquidaciones
 
