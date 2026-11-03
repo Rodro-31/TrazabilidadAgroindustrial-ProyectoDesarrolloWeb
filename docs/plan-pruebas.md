@@ -62,7 +62,7 @@ Para cada caso se contrasta el resultado esperado frente al obtenido y se indica
 |---|---|---|---|---|---|
 | **PR-15** | HTTPS con certificado válido | 1. Abrir `https://app.x-dev.store`. | Se muestra el candado de conexión segura. | **ÉXITO:** certificado válido (Caddy + Let's Encrypt). | `01-https-candado.png` |
 | **PR-16** | Pipeline CI/CD | 1. Revisar GitHub Actions tras un merge a `main`. | Los pasos `test → build-push → deploy` terminan en verde y las imágenes aparecen en `ghcr.io`. | **ÉXITO:** pipeline en verde; imágenes `trazabilidad-api`, `trazabilidad-web` y `trazabilidad-pwa` publicadas. | `04-actions-pipeline.png`, `06-registry-packages.png` |
-| **PR-17** | Documentación de la API | 1. Abrir `https://api.x-dev.store/api/docs`. | Swagger lista todos los endpoints con una descripción. | **PARCIAL:** Swagger carga, pero la mayoría de los endpoints no tiene descripción (`@ApiOperation`). Reportado como Issue. | `03-swagger.png` |
+| **PR-17** | Documentación de la API | 1. Abrir `https://api.x-dev.store/api/docs`. | Swagger lista todos los endpoints con una descripción. | **ÉXITO:** todos los endpoints tienen descripción (`@ApiOperation`). En la primera ejecución la mayoría no la tenía; se reportó como Issue #56 y se corrigió. | `03-swagger.png` |
 
 ---
 
@@ -88,4 +88,4 @@ Ejecutadas el 3/11/2026 a la 1:20 a. m. contra la API (NestJS + PostgreSQL) en u
 
 ## Resumen
 
-Se ejecutaron **30 casos**: 17 en el entorno de producción (PR-01 a PR-17) y 13 sobre reglas de negocio, traslados y liquidaciones (PR-18 a PR-30) contra la API en un entorno local con datos de prueba. **29 con éxito y 1 parcial** (PR-17, documentación de Swagger, reportado como Issue #56). Los errores o hallazgos se reportan como **Issues** en GitHub con los pasos para reproducirlos.
+Se ejecutaron **30 casos**: 17 en el entorno de producción (PR-01 a PR-17) y 13 sobre reglas de negocio, traslados y liquidaciones (PR-18 a PR-30) contra la API en un entorno local con datos de prueba. **Los 30 con éxito.** PR-17 (documentación de Swagger) salió parcial en la primera ejecución; se reportó como Issue #56 y se corrigió. Los errores o hallazgos se reportan como **Issues** en GitHub con los pasos para reproducirlos.
